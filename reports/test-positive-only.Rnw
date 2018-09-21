@@ -79,7 +79,6 @@ Implying:
  &= N\left(\lambda, \left[ \left( \frac{n_D}{(n_D - n_{D_I})^2}\right)^2\frac{4m}{2m-1}\sigma^2 \right]\right)
 \end{align}
 
-\section{Simulation Work}
 
 We know $Var(T)$, but in order to estimate it, we need to replace the population variance $\sigma^2$ with an estimate. 
 \begin{align}

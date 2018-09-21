@@ -1,0 +1,22 @@
+---
+title: "To Do List"
+author: "Suzanne Dufault"
+date: "9/21/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Active Tasks
+*
+
+#### Complete Tasks
+*
+
+#### General Thoughts
+*
+
+#### General Organization
+* It seems that `test-positive-perm-example`, `test-positive-only`, and `test-positive-fraction-v-test-positive` are all out of date. Should be able to remove them from the folder, given the manuscript is most up-to-date.
