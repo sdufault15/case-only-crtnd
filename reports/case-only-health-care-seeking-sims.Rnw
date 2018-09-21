@@ -1,0 +1,36 @@
+\documentclass{article}
+\usepackage[margin = 1in]{geometry}
+\usepackage{placeins}
+
+\title{Case-Only Under Differential Care-Seeking Behavior}
+\date{May 18, 2018}
+\author{Suzanne M. Dufault}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\abstract{These simulations address three different levels of differential care-seeking behavior: 1) low, 2) medium, and 3) high.}
+
+<<echo = FALSE>>=
+library(here)
+source(here('cr_tnd_2/lib', 'txtSetFunction.R'))
+load(here("cr_tnd_2/data", "Random10000Allocations.RData"))
+@
+
+\section{Simulation Description}
+
+In order to simulate differential care-seeking behavior, these simulations assume that the number of possible cases that would have been seen under perfect compliance based on the historical counts would be altered in a deterministic way. For example, imagine that individuals living in treated clusters feel more protected from dengue and as such, are 10\% less likely to seek treatment, whereas the healthcare seeking behaviou of individuals in the control arm is unchanged from before the intervention. Then, if based on historical accounts (and no intervention effect) we would have seen 100 cases across the treatment arm and 100 cases across the control arm, we would in reality only see 90 of the cases in the treatment arm seek care and all 100 cases in the control arm would seek care. The 10\% reduction would be applied proportionately across the cluster counts. 
+
+There are clearly many ways to complicate and, perhaps, more accurately model changes to human behavior that result from the application of the intervention. However, here we apply the previous frame to three different levels of care-seeking behavior:
+\begin{description}
+\item[low]{reduction of 5\% of observed cases in the treatment arm}
+\item[medium]{reduction of 15\% of observed cases in the treatment arm}
+\item[high]{reduction of 50\% of observed cases in the treatment arm}
+\end{description}
+
+In the event of an intervention effect of $\lambda$, the intervention effect is first applied and then the health care-seeking behavior effect is introduced. In the previous example, with an intervention effect of $RR = \lambda = 0.5$, there would be a total of 50 possible cases in the treatment arm, 45 of which would come into the clinics for treatment.
+
+\section{Simulations}
+
+\end{document}

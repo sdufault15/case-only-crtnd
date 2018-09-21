@@ -1,0 +1,316 @@
+\documentclass{article}
+\usepackage[margin = 1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{placeins}
+
+
+\title{Test Positive Fractions v. Test Positives}
+\author{Suzanne M. Dufault}
+\date{January 17, 2018}
+
+<<r global_options, include=FALSE>>=
+knitr::opts_chunk$set(fig.width=10, fig.height=6, fig.path='../graphs/', cache.path = "../cache/",
+                       warning=FALSE, message=FALSE)
+@
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\abstract{Addressing reviewer's comment: Authors choose $T = \alpha_I - \alpha_C$. What would be the problem with choosing $T' = p_I - p_C$ where $p_I$ is the average of $p_{Dj}$ in the intervention clusters and $p_C$ is the average of $p_{Dj}$ in the control clusters? Under the null, $E(T')$ would also be null? I think authors' $T$ is a better statistic, but it may still be influenced by differences in the incidence of non-arbovirus febrile illnesses between clusters, for example respiratory virus infections that occur at higher rates in more densely populated locations?}
+
+\section{Process}
+\begin{enumerate}
+\item I set up an example dataset for 10 clusters with variation between the clusters with respect to Cases and OFIs.  
+\item I then permuted 10 choose 5 (\Sexpr{choose(10,5)}) unique treatment allocations. 
+\item I computed the log(OR) for RR = 1 for each of the permuted allocations using 100 cases and 100 controls assigned to clusters according to their current proportions.
+%\item I computed the estimate of the standard deviation of the log(OR) for each of the permuted allocations using our proposed formula.
+%\item \textbf{Permutation CI} was found by marking the 2.5 and 97.5 percentiles of the log(OR) estimates.
+%\item \textbf{Paper CI} was found by taking \Sexpr{qnorm(0.975)} times the average estimated standard deviation of the log(OR) according to Nick's formula. 
+\end{enumerate}
+
+<<echo = FALSE>>=
+library(gtools)
+library(xtable)
+library(dplyr)
+library(rootSolve)
+library(RColorBrewer)
+library(scales)
+source("../../../cr_tnd/lib/paperFunction2.R")
+source('../../../cr_tnd/lib/txtSetFunction.R')
+source('../../../cr_tnd/lib/tTestFunction.R')
+source('../../../cr_tnd/lib/quadraticFunction.R')
+
+myColors <- brewer.pal(12, 'Set3')
+zstar <- qnorm(0.975)
+@
+\section{General Setup}
+
+Suppose there are $2m$ clusters with $m$ randomly assigned to the intervention and the remainder untreated. How do we determine (via some sort of modified T-test) whether the intervention is working? The cases and controls are distributed as follows:
+
+\FloatBarrier
+<<echo = FALSE, results = 'asis'>>=
+set.seed(12345)
+Clusters <- 1:10
+Treatment <- c(rep(1,5), rep(0,5))
+Cases <- floor(rnorm(10,50,10))
+Controls <- floor(rnorm(10,100,15))
+df <- data.frame(Clusters, Treatment, Cases, Controls)
+df <- df %>% transmute(Clusters, Treatment, 'Case Distribution' = Cases/sum(Cases), 'Control Distribution' = Controls/sum(Controls))
+print(xtable(df, caption = "Distribution of controls, from which we sample nD cases and nbarD = r x nD controls", digits=c(0,0,0,2,2)), include.rownames = FALSE)
+@
+
+<<echo = FALSE, cache = TRUE>>=
+#choose(10,5) (FOR THE SIMULATIONS LATER)
+tx1 <- c(rep(1,5), rep(0,5))
+txs <- matrix(rep(NA, 10), ncol = 1)
+while(ncol(unique(txs, MARGIN = 2)) < (choose(10,5)+1)){
+  tx <- permute(tx1)
+  txs <- cbind(txs, tx)
+}
+txs <- unique(txs, MARGIN = 2)[,-is.na(txs)]
+@
+
+\FloatBarrier
+
+If we want to sample $n_D = 1000$ cases and $n_{\bar{D}} = 1000$ controls, our data looks as follows.
+
+<<echo = FALSE, results = 'asis'>>=
+df2 <- df %>% mutate('Cases' = round(1000*`Case Distribution`), 'Controls' = round(1000*`Control Distribution`))
+print(xtable(df2, digits = c(0,0,0,4,4,0,0), caption = paste0('Case and control counts are rounded in order to be sensible. This leads to ',sum(df2$Cases), ' cases in this particular scenario and ', sum(df2$Controls), ' controls. '), align = c('cc|ccccc')), include.rownames = FALSE)
+@
+
+
+
+\section{Test-Positives Only}
+
+The reviewer described ignoring the controls, such that we only consider the following case-specific data. Because treatment is randomized, this conceptually is a reasonable approach. 
+
+\FloatBarrier
+
+<<echo = FALSE, results = 'asis'>>=
+df_pos <- df2 %>% select(-Controls, - `Control Distribution`)
+xtable(df_pos, caption = "Example data if we just consider the cases.", align = "lcccc", digits = c(0,0,0,4,0))
+@
+
+\FloatBarrier
+
+Let $j \in I$ be a cluster $j$ in the intervention arm and $j \in C$ be a cluster $j$ in the control arm. The proposed test statistic:
+$$T = (n_{D} | j \in I) - (n_{D} | j \in C) $$
+
+where $(n_{D} | j \in I)$ is equal to the total number of dengue cases in the intervention arm  and $(n_D | j \in C)$ is equal to the total number of dengue cases in the control arm. 
+
+\subsection{At the Null}
+\subsubsection*{Total}
+At the null, we expect half of all cases to fall in each arm ($n_D/2$). 
+\begin{align}
+E[n_D | j \in C] &= E[n_D | j \in I] \\
+ &= \frac{1}{2}n_D
+\end{align}
+
+Hence, at the null, $T = 0$ 
+\begin{align}
+E[T | n_D] &= E[n_D|j \in I] - E[n_D| j \in C] \\
+ &= E[n_D|j \in I] - [n_D - E[n_D|j \in I]] \\
+ &= 2E[n_D|j \in I] - n_D \\
+ &= 2\frac{n_D}{2} - n_D \\
+ &= 0
+\end{align}
+
+\subsubsection{Variance}
+The variance of $T$ is estimated as follows:
+
+\begin{align}
+Var(T) &= Var(2\times[n_D|j \in I] - n_D) \\
+ &= 2^2Var([n_D|j \in I])\\
+ &= 2^2 (2m)^2 \left(\frac{2m -m}{2m} \right) \frac{s_x^2}{m} \\
+ &= 8ms_x^2
+\end{align}
+
+where $s_x^2 = \sum\limits_{i=1}^n \frac{(x_i - \bar{x})^2}{m-1}$ is the sample variance of the counts in either the control or intervention clusters.
+
+\subsection{Away from the Null}
+
+\subsubsection{Recovering the RR}
+
+After intervention, the observed total counts
+
+Away from the null: $n_D = \lambda \times (n_D | j \in I) + (n_D | j \in C)$. To recover lambda, we can simply take a ratio of the observed totals:
+$$\frac{\lambda \times (n_D | j\in I)}{(n_D | j \in C)} = \lambda$$
+
+
+\subsubsection{Delta Method Variance}
+
+
+
+% \subsubsection{Variance}
+% \begin{align}
+% T &= \lambda \times (n_D | j \in I) - (n_D | j \in C)\\
+%  &= \lambda \times(n_D | j \in I) - (n_D - \lambda (n_D | j \in I)) \\
+%  &= 2 \times \lambda \times (n_D | j \in I) - n_D\\
+% %Var(T) &= (2\lambda)^2 Var(n_D | j \in I)\\
+% % &= (2\lambda)^2 (2m)^2 \left(\frac{2m -m}{2m} \right) \frac{s_x^2}{m} \\
+% % &= 16\lambda^2m^2 \left(\frac{m}{2m}\right) \frac{s_x^2}{m} \\
+% % &= 8\lambda^2ms_x^2
+% \end{align}
+% 
+% where $s_x^2 = \sum\limits_{j\in I} \frac{(n_{D,j} - (\overline{n_{D}} | j \in I))^2}{m-1}$ is the sample variance. While it is currently expressed for the intervention clusters, we could alternatively choose to estimate the variance of the control clusters.
+% 
+% 
+% The standardized test statistic (under the null) is then $T/\sqrt{8ms_x^2}$. Since the arms both contain $m$ clusters, we can average the two estimates of the variance of the total counts in each arm (the pooled variance estimators). Away from the null, we expect the variance to change by a multiple of $\lambda^2$. This will result in a decreased variance estimate (assuming $\lambda < 1$).
+
+
+\section{Simulation}
+
+<<echo = FALSE>>=
+set.seed(12345)
+Clusters <- 1:10
+#Treatment <- c(rep(1,(length(Clusters)/2)), rep(0,(length(Clusters)/2)))
+Cases <- floor(rnorm(length(Clusters),50,10))
+Controls <- floor(rnorm(length(Clusters),100,15))
+df <- data.frame(Clusters, Cases, Controls)
+df <- df %>% transmute(Clusters, 'Case Distribution' = Cases/sum(Cases), 'Control Distribution' = Controls/sum(Controls))
+df2 <- df %>% mutate('Cases' = round(1000*`Case Distribution`), 'OFI' = round(1000*`Control Distribution`), 'Period' = 1)
+df2 <- cbind(df2,txs)
+@
+
+\subsection{Test-Positive Fraction Method Results}
+<<echo = FALSE>>=
+test1 <- tTestFunction(df2, rr = 1, period = 1, ratio = 1, ncases = 1000)
+test6 <- tTestFunction(df2, rr = 0.6, period = 1, ratio = 1, ncases = 1000)
+test4 <- tTestFunction(df2, rr = 0.4, period = 1, ratio = 1, ncases = 1000)
+plot(density(unlist(test1$lambdas)), xlim = c(0,1.6), ylim = c(0,6), main = "Estimated RR From Test-Positive Fraction Method")
+abline(v = c(1,0.6,0.4), col = myColors[1:3], lwd = 2.5)
+polygon(density(unlist(test1$lambdas)), col = alpha(myColors[1], 0.7))
+polygon(density(unlist(test6$lambdas)), col = alpha(myColors[2], 0.7))
+polygon(density(unlist(test4$lambdas)), col = alpha(myColors[3], 0.7))
+@
+
+
+% \section{Test-Positive Fraction}
+% 
+% In our paper \textit{Analysis of Cluster Randomized Test-Negative Designs: Cluster-Level Methods} we introduce the concept of test-positive fractions. All test-positive (cases) and test-negative (controls) individuals are selected numbering $n_D$ an $n_{\bar{D}}$, respectively. The Relative Risk associated with the intervention is denoted by $\lambda$. Table 1 already contains $p_{D_j}$ and $p_{\bar{D}_j}$ (the fraction of cases and controls, respectively, in the $j$th cluster) in the columns labeled ``Case Distribution'' and ``Control Distribution'' respectively.
+% 
+% 
+% $E_0(p_{D_j}) = \frac{1}{2m} = \Sexpr{1/(2*5)}$. We observe this is the case: \FloatBarrier
+% 
+% <<echo = FALSE, results = 'asis'>>=
+% means <- data.frame(Mean = c("Expected (under the null)", "Pdj", "Pdbarj"), Value = c(1/(10), mean(df2$`Case Distribution`), mean(df2$`Control Distribution`)))
+% xtable(means, digits = c(0,0,5), caption = "Property discussed in previous paper")
+% @
+% 
+% \FloatBarrier
+% 
+% The proposed test statistic:
+% $$ T = \alpha_I - \alpha_C = \textnormal{average($a_j|$ cluster $j$ is intervention) - (average($a_j|$cluster $j$ is untreated))}$$
+% 
+% \noindent{where $a_j = \frac{p_{D_j}}{p_{D_j} + rp_{\bar{D}_j}}$. }
+% 
+% Under the null hypothesis, the $a_j$s for the $m$ intervention clusters are simply a random sample of $m$ of these values, also true for the untreated $a_j$s. The variance of the $2m$ fixed values of $a_j$ across all clusters depends on: (i) the variability of both the $p_{D_j}$s and the $p_{\bar{D}_j}$s, (ii) the covariance of the $p_{D_j}$s and the $p_{\bar{D}_j}$s, and (iii) the value of $r$. The variance of the $2m$ $a_j$s is $\sigma^2 = \sum\limits_{j = 1}^{2m}(a_j - \bar{a})^2/(2m-1)$ where $\bar{a} = \sum\limits_{j=1}^2m a_j/2m$
+
+
+% \subsubsection*{Variance}
+% When estimating the variance of the $2m$ fixed values of $p_{D_j}$ across all clusters depends \textbf{only} on the distribution of the $p_{D_j}$s. Therefore, using the finite correction factor:
+% 
+% \begin{align}
+% \sigma_{\pi} &= \frac{\sigma}{\sqrt{m}}\sqrt{\frac{M-m}{M}} \\
+% \sigma^2_{\pi} &= \frac{\sigma^2}{m}\times \frac{2m-m}{2m}
+% \end{align}
+% 
+% when $\sigma^2 = \sum\limits_{j=1}^{2m}(p_{D_j} - \frac{1}{2m})^2/(2m-1)$.
+% 
+% Therefore, at the null:
+% \begin{align}
+% Var_0(T) &= Var_0(\pi_I - \pi_C) \\
+%  &= Var_0(\pi_I) + Var_0(\pi_C) + 2Cov_0(\pi_I, \pi_C) \\
+%  &= 2Var_0(\pi_I) \\
+%  &= 2\sigma^2_{\pi}
+% \end{align}
+% 
+% \subsubsection*{QUESTIONS:}
+% I am sure this variance is incorrect. I do think the variance of $\pi_I$ is equal to the variance of $\pi_C$ at the null (on average!), but once we have assigned the first $m$ clusters to the treatment arm, $n_{D_I} = \sum\limits_{j \in I} n_{D_j}$ cases are in the treatment arm and only $n_D - n_{D_I}$ are left for the control arm, forcing dependence between the arms.  
+% 
+% \subsection{Away From the Null}
+% When $\lambda < 1$, $\pi_I$ should be suppressed. To estimate $p'_{D_j}$ for a cluster $j$ in the intervention arm ($j \in I$):
+% 
+% \begin{align}
+% p'_{D_j} &= \frac{\lambda n_{D_j}}{\lambda\sum\limits_{j\in I} n_{D_j} + \sum\limits_{j\in C} n_{D_j}} \\
+%  &= \frac{\lambda n_{D_j}}{(\lambda + 1) (n_D/2)}\\
+%  &= 2 \times \frac{\lambda}{\lambda+1}p_{D_j}
+% \end{align}
+% 
+% And for a cluster $j$ in the control arm ($j \in C$):
+% \begin{align}
+% p'_{D_j} &= \frac{n_{D_j}}{\lambda\sum\limits_{j\in I} n_{D_j} + \sum\limits_{j\in C} n_{D_j}} \\
+%  &= \frac{n_{D_j}}{(\lambda + 1) (n_D/2)}\\
+%  &= 2\times \frac{1}{\lambda+1}p_{D_j}
+% \end{align}
+% 
+% \subsubsection*{Mean}
+% For a cluster $j$ in the treatment arm ($j \in I$):
+% \begin{align}
+% E[p'_{D_j} | j \in I] &= E[2\frac{\lambda}{\lambda + 1}p_{D_j}] \\
+%  &= 2\frac{\lambda}{\lambda + 1}E[p_{D_j}] \\
+%  &= 2\frac{\lambda}{\lambda + 1}\frac{1}{2m}\\
+%  &= \frac{\lambda}{(\lambda + 1)m}
+% \end{align}
+% 
+% For a cluster $j$ in the control arm ($j \in C$):
+% \begin{align}
+% E[p'_{D_j} | j \in C] &= E[2\frac{1}{\lambda + 1}p_{D_j}] \\
+%  &= 2\frac{1}{\lambda + 1}E[p_{D_j}]\\
+%  &= 2\frac{1}{\lambda + 1}\frac{1}{2m}\\
+%  &= \frac{1}{(\lambda + 1)m}
+% \end{align}
+% 
+% Hence, 
+% \begin{align}
+% T &= \pi'_I - \pi'_C \\
+%  &= E[p'_{D_j}|j\in I] - E[p'_{D_j}|j\in C] \\
+%  &= \frac{\lambda}{(\lambda + 1)m} - \frac{1}{(\lambda + 1)m} \\
+%  &= \frac{\lambda-1}{(\lambda + 1)m}
+% \end{align}
+% 
+% which is only zero when $\lambda = 1$.
+% 
+% Further, $\lambda$ can be recovered simply by taking the ratio of the average proportion of cases in the treatment arm over the average proportion of cases in the control arm:
+% \begin{align}
+% \lambda &= \pi'_I / \pi'_C \\
+%  &= \frac{E[p'_{D_j} | j \in I]}{E[p'_{D_j} | j \in C]}\\
+%  &= \frac{ \frac{\lambda}{(1 + \lambda)m}}{\frac{1}{(1 + \lambda)m}} \\
+%  &= \lambda
+% \end{align}
+% 
+% 
+% \subsubsection*{Variance}
+% 
+% Variance, again, is a bit more complex. $Var(T) = Var\left[ \pi'_I - \pi'_C \right]$. However, $\pi'_I$ and $\pi'_C$ are not independent. 
+% 
+% \begin{align}
+% Var[\pi'_I ] &= Var[avg(p'_{D_j}|j \in I)] \\
+%  &= \frac{\sigma^2}{m}(\frac{2m-m}{2m})
+% \end{align}
+% 
+% where $\sigma^2 = \frac{\sum\limits_{j\in I} \left(p_{D_j} - \frac{\lambda}{(\lambda + 1)m} \right)^2}{2m-1}$
+% 
+% \pagebreak
+% 
+% \FloatBarrier
+% <<echo = FALSE, results = 'asis'>>=
+% lambda <- 0.5
+% df_tx <- df_pos %>% mutate('Cases After Treatment' = ifelse(Treatment == 1, Cases*lambda, Cases), 'Case Distribution After Treatment' = `Cases After Treatment`/sum(`Cases After Treatment`)) %>% select(-`Case Distribution`)
+% xtable(df_tx, digits = c(0,0,0,4,1,4), caption = "Table demonstrating the shifts in case distribution before intervention and after intervention (lambda = 0.5).", align = c('cc|cccc'))
+% @
+% 
+% \FloatBarrier
+% To sample $n_{D} = 1000$ cases according to this distribution, our data will then look as follows:
+% 
+% \FloatBarrier
+% <<echo = FALSE, results = 'asis'>>=
+% df_tx <- df_tx %>% mutate('Case Counts After Treatment' = 1000*`Case Distribution After Treatment`) %>% select(Clusters, Treatment, `Case Counts After Treatment`, `Case Distribution After Treatment`)
+% xtable(df_tx, digits = c(0,0,0,4,4), align = c('cc|ccc'), caption = "Case counts and distribution after a treatment of lambda = 0.5 is applied.")
+% @
+
+
+
+\end{document}

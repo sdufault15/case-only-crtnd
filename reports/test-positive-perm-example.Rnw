@@ -1,0 +1,125 @@
+\documentclass{article}
+\usepackage[margin= 1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{placeins}
+
+
+\title{Testing the Test-Only Estimation}
+\date{March 2, 2018}
+\author{Suzanne Dufault}
+
+
+\begin{document}
+
+\maketitle
+
+<<echo = FALSE>>=
+library(gtools)
+library(xtable)
+library(RColorBrewer)
+library(geepack)
+library(dplyr)
+library(lme4)
+
+source("../lib/txtSetFunction.R")
+source("../lib/casesOnlyFunction.R")
+source("../lib/quadraticFunction.R")
+source("../lib/tTestFunction.R")
+source("../lib/ORfunction.R")
+source("../lib/paperFunction2.R")
+@
+
+<<echo = FALSE, cache = TRUE, results = 'asis'>>=
+# To match those in the paper (which were generated before I set the seed.)
+clust <- seq(1:10)
+Cases <- c(52, 74, 54, 72, 46, 42, 70, 50, 73, 69)
+OFI <- c(138, 212, 125, 145, 165, 194, 250, 131, 229, 156)
+Period <- rep(1,10)
+
+#choose(10,5)
+tx1 <- c(rep(1,5), rep(0,5))
+txs <- matrix(rep(NA, 10), ncol = 1)
+while(ncol(unique(txs, MARGIN = 2)) < (choose(10,5)+1)){
+  tx <- permute(tx1)
+  txs <- cbind(txs, tx)
+}
+
+txs <- unique(txs, MARGIN = 2)[,-is.na(txs)]
+dataFrame <- data.frame(Cluster = clust, Cases, OFI, Period, txs)
+xtable(dataFrame[1:10, 1:10], align = "ccccccccccc", digits = 0, caption  = "The first few columns of treatment assignments and corresponding Case and OFI numbers.")
+@
+
+<<echo = FALSE>>=
+rr1 <- caseOnlyFunction(dataFrame, rrIN = 1, period = 1, ncases = 1000)
+rr1t <- tTestFunction(dataFrame, rrIN = 1, period = 1, ncases = 1000, ratio = 1)
+rr1o <- paperFunction2(dataFrame, rr = 1, period = 1, ratio = 1, ncases = 1000)
+@
+
+<<echo = FALSE>>=
+rr6 <- caseOnlyFunction(dataFrame, rrIN = 0.6, period = 1, ncases = 1000)
+rr6t <- tTestFunction(dataFrame, rrIN = 0.6, period = 1, ncases = 1000, ratio = 1)
+rr6o <- paperFunction2(dataFrame, rr = 0.6, period = 1, ratio = 1, ncases = 1000)
+@
+
+<<echo = FALSE>>=
+rr5 <- caseOnlyFunction(dataFrame, rrIN = 0.5, period = 1, ncases = 1000)
+rr5t <- tTestFunction(dataFrame, rrIN = 0.5, period = 1, ncases = 1000, ratio = 1)
+rr5o <- paperFunction2(dataFrame, rr = 0.5, period = 1, ratio = 1, ncases = 1000)
+@
+
+<<echo = FALSE>>=
+rr4 <- caseOnlyFunction(dataFrame, rrIN = 0.4, period = 1, ncases = 1000)
+rr4t <- tTestFunction(dataFrame, rrIN = 0.4, period = 1, ncases = 1000, ratio = 1)
+rr4o <- paperFunction2(dataFrame, rr = 0.4, period = 1, ratio = 1, ncases = 1000)
+@
+
+<<echo = FALSE>>=
+rr3 <- caseOnlyFunction(dataFrame, rrIN = 0.3, period = 1, ncases = 1000)
+rr3t <- tTestFunction(dataFrame, rrIN = 0.3, period = 1, ncases = 1000, ratio = 1)
+rr3o <- paperFunction2(dataFrame, rr = 0.3, period = 1, ratio = 1, ncases = 1000)
+@
+
+<<echo = FALSE>>=
+names(dataFrame)[1] <- "clust"
+rr1g <- ORTestFunction(dataFrame, rrIN = 1, period = 1, n1 = 1000, ratio = 1)
+rr6g <- ORTestFunction(dataFrame, rrIN = 0.6, period = 1, n1 = 1000, ratio = 1)
+rr5g <- ORTestFunction(dataFrame, rrIN = 0.5, period = 1, n1 = 1000, ratio = 1)
+rr4g <- ORTestFunction(dataFrame, rrIN = 0.4, period = 1, n1 = 1000, ratio = 1)
+rr3g <- ORTestFunction(dataFrame, rrIN = 0.3, period = 1, n1 = 1000, ratio = 1)
+@
+
+
+\section{Power}
+
+<<echo = FALSE, results = 'asis'>>=
+testpos <- rbind(mean(unlist(rr1$pVals) < 0.05), mean(unlist(rr6$pVals) < 0.05), mean(unlist(rr5$pVals) < 0.05), mean(unlist(rr4$pVals) < 0.05), mean(unlist(rr3$pVals) < 0.05))
+ttest <- rbind(mean(unlist(rr1t$pVals) < 0.05), mean(unlist(rr6t$pVals) < 0.05), mean(unlist(rr5t$pVals) < 0.05), mean(unlist(rr4t$pVals) < 0.05), mean(unlist(rr3t$pVals) < 0.05))
+otest <- rbind(1-mean(unlist(rr1o$insignificance)), 1-mean(unlist(rr6o$insignificance)), 1-mean(unlist(rr5o$insignificance)), 1-mean(unlist(rr4o$insignificance)), 1-mean(unlist(rr3o$insignificance)))
+gee <- rbind(mean(unlist(rr1g$pval_gee) < 0.05), mean(unlist(rr6g$pval_gee) < 0.05), mean(unlist(rr5g$pval_gee) < 0.05), mean(unlist(rr4g$pval_gee) < 0.05), mean(unlist(rr3g$pval_gee) < 0.05))
+me <- rbind(mean(unlist(rr1g$pval_me) < 0.05), mean(unlist(rr6g$pval_me) < 0.05), mean(unlist(rr5g$pval_me) < 0.05), mean(unlist(rr4g$pval_me) < 0.05), mean(unlist(rr3g$pval_me) < 0.05))
+
+tab1 <- cbind(testpos, ttest, otest, gee, me)
+rownames(tab1) <- c("RR = 1", "RR = 0.6", "RR = 0.5", "RR = 0.4", "RR = 0.3")
+colnames(tab1) <- c("Test-Positive Only", "Test-Positive Fraction", "Odds Ratio Method", "GEE", "Mixed Effects")
+xtable(tab1, digits = 3, caption = 'The proportion of tests (out of the 252 possible permutations) which result in p-values less than 0.05. When controls are used, the ratio of cases to controls is 1. The number of cases sampled each time is 1000.')
+@
+
+\section{Standard Deviation}
+
+<<echo = FALSE, results = 'asis'>>=
+perm.sd <- sd(unlist(rr1o$OR_est)) # actual permuation distribution
+testpos.sd <- mean(sqrt(unlist(rr1$var.lambdas)))
+otest.sd <- mean(unlist(rr1o$sd_est))
+ttest.sd <- mean(unlist(rr1t$sds))
+gee.sd <- mean(unlist(rr1g$sd_gee_est))
+me.sd <- mean(unlist(rr1g$sd_me_est))
+
+sds <- rbind(perm.sd, testpos.sd, otest.sd, ttest.sd, gee.sd, me.sd)
+dimnames(sds) <- list(c("Permutation", "Test-Positive Only", "Test-Positive Fraction", "Odds Ratio Method", "GEE", "ME"), "Standard Deviation Estimate")
+xtable(sds, align = "l|c", digits = 5, caption = "Comparison of our proposed method (Paper), GEE, and ME standard deviation estimation with the true standard deviation of the permutation distribution (Permutation). This is at the null for the setting where nControls = nCases = 1000.")
+@
+
+
+
+
+\end{document}

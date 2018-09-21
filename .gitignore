@@ -26,3 +26,4 @@ vignettes/*.pdf
 rsconnect/
 .Rproj.user
 case-only.Rproj
+data

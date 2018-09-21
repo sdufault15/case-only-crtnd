@@ -1,0 +1,101 @@
+\documentclass{article}
+\usepackage[margin = 1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{placeins}
+
+\title{A Case-Only Approach to Estimating the RR in the CR-TND}
+\author{Suzanne Dufault}
+\date{March 2, 2018}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Set Up}
+Existing methods for estimating the RR from CR-TND data require the use of test-positive (case) and test-negative (control) counts from each cluster. Because the treatment is randomized, it is possible to estimate the intervention RR using only the test-positive counts. This approach is explored here.
+
+Suppose there are $2m$ clusters in the study with $m$ assigned to the intervention and the remaining $m$ to control. Let $j \in I$ specify a cluster $j$ in the intervention arm and $j \in C$ be a cluster $j$ in the control arm. In each cluster, the number of test-positive individuals $n_{D_j}$ is recorded. A proposed test-statistic is then:
+
+\begin{align}
+T &= \sum\limits_{j\in I} n_{D_j} - \sum\limits_{j\in C}n_{D_j}\\
+ &= n_{D_I} - n_{D_C}
+\end{align}
+
+\section{At the Null}
+\subsection{Total}
+At the null, we expect half of all cases ($n_D$) to fall in each arm:
+\begin{equation}
+E[n_{D_I}] = E[n_{D_C}] = \frac{n_D}{2}
+\end{equation}
+
+Hence, at the null, $T = 0$ 
+\begin{align}
+E[T] &= E[n_{D_I}] - E[n_{D_C}] \\
+ &= E[n_{D_I}] - (n_D - E[n_{D_I}]) \\
+ &= 2E[n_{D_I}] - n_D \\
+ &= 2\frac{n_D}{2} - n_D \\
+ &= 0
+\end{align}
+
+\subsection{Variance}
+The variance of $T$ is estimated as follows:
+
+\begin{align}
+Var(T) &= Var(2\times[n_{D_I}] - n_D) \\
+ &= 2^2Var(n_{D_I})\\
+ &= 2^2 \frac{(2m)^2}{m} \frac{m}{2m-1}\frac{\sigma^2}{m}\\
+ &= \frac{16m}{2m-1}\sigma^2
+\end{align}
+
+where $\sigma^2$ is the population variance of the $2m$ test-positive counts.
+
+\subsection{Standardized Statistic}
+
+Hence, the standardized test statistic is $\frac{T}{\sqrt{\frac{16m}{2m-1}\sigma^2}} \sim N(0,1)$.
+
+\section{Recovering the Intervention RR}
+When an intervention is applied to reduce the number of cases in the intervention arm, we would like to estimate the intervention effect through the RR ($\lambda$). In the test-positive setting, this can be accomplished through a simple ratio of the sums in the two arms:
+
+\begin{align}
+\lambda &= \frac{n_{D_I}}{n_{D_C}} \\
+ &= \frac{n_{D_I}}{n_D - n_{D_I}}
+\end{align}
+
+\subsection{Variance of the Intervention RR}
+
+In order to estimate the variance of the intervention RR $\lambda$, we can use the delta method. We know the properties of $n_{D_I}$, and $\lambda$ is a simple transformation of $n_{D_I}$.
+
+Hence if $x = n_{D_I}$:
+\begin{align}
+g(x) &= \frac{x}{n_D - x}\\
+g'(x) &= \frac{n_D}{(n_D - x)^2}
+\end{align}
+
+Implying:
+\begin{align}
+\hat{\lambda} &\approx N\left(\lambda, \left[ \left(\frac{n_D}{(n_D - x)^2} \right)^2 Var(x) \right]\right) \\
+ &= N\left(\lambda, \left[ \left(\frac{n_D}{(n_D - n_{D_I})^2} \right)^2 Var(n_{D_I}) \right]\right)\\
+ &= N\left(\lambda, \left[ \left( \frac{n_D}{(n_D - n_{D_I})^2}\right)^2 \frac{4m^2}{m}\frac{m}{2m-1}\frac{\sigma^2}{m} \right]\right)\\
+ &= N\left(\lambda, \left[ \left( \frac{n_D}{(n_D - n_{D_I})^2}\right)^2\frac{4m}{2m-1}\sigma^2 \right]\right)
+\end{align}
+
+\section{Simulation Work}
+
+We know $Var(T)$, but in order to estimate it, we need to replace the population variance $\sigma^2$ with an estimate. 
+\begin{align}
+\hat{Var}(T) &= 2^2\hat{Var}(n_{D_I})\\
+ &= 4 (2m)^2\frac{1}{2}\frac{s^2}{m}\\
+ &= 8ms^2
+\end{align}
+
+where $s^2 = \frac{1}{m-1} \sum\limits_{j\in I, j = 1}^m (n_{D_j} - \bar{n}_{D_J})^2$. Hence, we can compare $T/\sqrt{8ms^2}$ to a T distribution with 2(m-1) degrees of freedom.
+
+The same is true for estimating $Var(\lambda)$.
+\begin{align}
+Var(\lambda) &= \left( \frac{n_D}{(n_D - n_{D_I})^2}\right)^2 Var(n_{D_I})\\
+\hat{Var(\lambda)} &= \left(\frac{n_D}{(n_D - n_{D_I})^2}\right)^2 \hat{Var}(n_{D_I}) \\
+ &= \left(\frac{n_D}{(n_D - n_{D_I})^2}\right)^2 4m^2 \frac{1}{2}\frac{s^2}{m}\\
+ &= \left(\frac{n_D}{(n_D - n_{D_I})^2}\right)^2 2ms^2
+\end{align}
+
+\end{document}
