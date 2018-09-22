@@ -14,13 +14,12 @@
 
 <<echo = FALSE>>=
 library(here)
-source(here('cr_tnd_2/lib', 'txtSetFunction.R'))
-load(here("cr_tnd_2/data", "Random10000Allocations.RData"))
+source(here('lib', '01-packages-functions-data.R'))
 @
 
 \section{Simulation Description}
 
-In order to simulate differential care-seeking behavior, these simulations assume that the number of possible cases that would have been seen under perfect compliance based on the historical counts would be altered in a deterministic way. For example, imagine that individuals living in treated clusters feel more protected from dengue and as such, are 10\% less likely to seek treatment, whereas the healthcare seeking behaviou of individuals in the control arm is unchanged from before the intervention. Then, if based on historical accounts (and no intervention effect) we would have seen 100 cases across the treatment arm and 100 cases across the control arm, we would in reality only see 90 of the cases in the treatment arm seek care and all 100 cases in the control arm would seek care. The 10\% reduction would be applied proportionately across the cluster counts. 
+In order to simulate differential care-seeking behavior, these simulations assume that the number of possible cases that would have been seen under perfect compliance based on the historical counts would be altered in a deterministic way. For example, imagine that individuals living in treated clusters feel more protected from dengue and as such, are 10\% less likely to seek treatment, whereas the healthcare seeking behavior of individuals in the control arm is unchanged from before the intervention. Then, if based on historical accounts (and no intervention effect) we would have seen 100 cases across the treatment arm and 100 cases across the control arm, we would in reality only see 90 of the cases in the treatment arm seek care and all 100 cases in the control arm would seek care. The 10\% reduction would be applied proportionately across the cluster counts. 
 
 There are clearly many ways to complicate and, perhaps, more accurately model changes to human behavior that result from the application of the intervention. However, here we apply the previous frame to three different levels of care-seeking behavior:
 \begin{description}
@@ -32,5 +31,35 @@ There are clearly many ways to complicate and, perhaps, more accurately model ch
 In the event of an intervention effect of $\lambda$, the intervention effect is first applied and then the health care-seeking behavior effect is introduced. In the previous example, with an intervention effect of $RR = \lambda = 0.5$, there would be a total of 50 possible cases in the treatment arm, 45 of which would come into the clinics for treatment.
 
 \section{Simulations}
+
+\subsection{At the Null} \FloatBarrier
+
+<<echo = FALSE>>=
+load(here("data", "hcsb-NULL-09212018.RData"))
+@
+
+<<echo = FALSE>>=
+hist(unlist(hcsb1$param.est), breaks = 100, col = 'gray',
+     main = expression(paste("Distribution of the Estimated Health-Care Seeking Behavior Effect (", gamma, ")")),
+     sub = "Estimation on Historic Data without Modification",
+     xlab = expression(gamma))
+@
+
+\FloatBarrier
+
+\subsection{With an Intervention}
+<<echo = FALSE>>=
+load(here("data", "case-only/hcsb-HIGH-09212018.RData"))
+load(here("data", "case-only/hcsb-MED-09212018.RData"))
+load(here("data", "case-only/hcsb-LOW-09212018.RData"))
+@
+
+<<echo = FALSE>>=
+s1 <- summary(unlist(hcsb.05$param.est))
+s2 <- summary(unlist(hcsb.15$param.est))
+s3 <- summary(unlist(hcsb.50$param.est))
+
+rbind(s1, s2, s3)
+@
 
 \end{document}

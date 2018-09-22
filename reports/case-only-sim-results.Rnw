@@ -3,21 +3,25 @@
 \usepackage{placeins}
 
 \title{Case-Only Simulation Results}
-\date{March 5, 2018}
+\date{September 21, 2018}
 \author{Suzanne Dufault}
 
 \begin{document}
 \maketitle
 
+<<r global_options, include=FALSE>>=
+knitr::opts_chunk$set(fig.width=6, fig.height=4, fig.path='../graphs/',
+                       warning=FALSE, message=FALSE, fig.align = 'center')
+@
 
-CHECK THISSSS
 <<echo = FALSE>>=
+library(here)
 library(xtable)
-load("../data/case-only/case-only-NULL-03072018.RData")
-load("../data/case-only/case-only-6-03072018.RData")
-load("../data/case-only/case-only-5-03072018.RData")
-load("../data/case-only/case-only-4-03072018.RData")
-load("../data/case-only/case-only-3-03072018.RData")
+load(here("data", "case-only/case-only-NULL-09212018.RData"))
+load(here("data", "case-only/case-only-6-09212018.RData"))
+load(here("data", "case-only/case-only-5-09212018.RData"))
+load(here("data", "case-only/case-only-4-09212018.RData"))
+load(here("data", "case-only/case-only-3-09212018.RData"))
 
 period1 <- c("03_05", "05_06", "06_07", "07_08", "08_10", "10_11", "11_12", "12_13", "13_14")
 zstar <- 1.96
@@ -26,41 +30,24 @@ zstar <- 1.96
 <<echo = FALSE, results = 'asis'>>=
 t1 <- c(mean(unlist(case1$pVals) <= 0.05), mean(unlist(case6$pVals) <= 0.05), mean(unlist(case5$pVals) <= 0.05), mean(unlist(case4$pVals) <= 0.05), mean(unlist(case3$pVals) <= 0.05))
 
-rr1 <- c(mean(unlist(case1$lambdas) - 1), mean(unlist(case6$lambdas) - 0.6), mean(unlist(case5$lambdas) - 0.5), mean(unlist(case4$lambdas) - 0.4), mean(unlist(case3$lambdas) - 0.3))
+rr1 <- c(mean(unlist(case1$param.est) - 1), mean(unlist(case6$param.est) - 0.6), mean(unlist(case5$param.est) - 0.5), mean(unlist(case4$param.est) - 0.4), mean(unlist(case3$param.est) - 0.3))
 
-pp1 <- (unlist(lapply(case1$var.log.lambdas, function(x) mean(sqrt(x)))))
+pp1 <- (unlist(lapply(case1$var.log.param, function(x) mean(sqrt(x)))))
 names(pp1) <- c(paste0(period1))
-pp2 <- (unlist(lapply(case6$var.log.lambdas, function(x) mean(sqrt(x)))))
-pp3 <- (unlist(lapply(case5$var.log.lambdas, function(x) mean(sqrt(x)))))
-pp4 <- (unlist(lapply(case4$var.log.lambdas, function(x) mean(sqrt(x)))))
-pp5 <- (unlist(lapply(case3$var.log.lambdas, function(x) mean(sqrt(x)))))
-sd <- c(mean(sqrt(unlist(case1$var.log.lambdas))), mean(sqrt(unlist(case6$var.log.lambdas))), mean(sqrt(unlist(case5$var.log.lambdas))), mean(sqrt(unlist(case4$var.log.lambdas))), mean(sqrt(unlist(case3$var.log.lambdas))))
-
-#rownames(sd) <- c("RR = 1", "RR = 0.6", "RR = 0.5", "RR = 0.4", "RR = 0.3")
-#sd <- cbind(sd, c(sd(log(unlist(case1$lambdas))), sd(log(unlist(case6$lambdas))), sd(log(unlist(case5$lambdas))), sd(log(unlist(case4$lambdas))), sd(log(unlist(case3$lambdas)))))
-#sd <- cbind(sd, c(mean(unlist(case1$var.lambdas)), mean(unlist(case6$var.lambdas)), mean(unlist(case5$var.lambdas)), mean(unlist(case4$var.lambdas)), mean(unlist(case3$var.lambdas))))
-#colnames(sd)[10] <- "True"
-#colnames(sd)[11] <- "Average"
-
-#xtable(sd, caption = "Estimated SD(log(OR))")
+pp2 <- (unlist(lapply(case6$var.log.param, function(x) mean(sqrt(x)))))
+pp3 <- (unlist(lapply(case5$var.log.param, function(x) mean(sqrt(x)))))
+pp4 <- (unlist(lapply(case4$var.log.param, function(x) mean(sqrt(x)))))
+pp5 <- (unlist(lapply(case3$var.log.param, function(x) mean(sqrt(x)))))
+sd <- c(mean(sqrt(unlist(case1$var.log.param))), mean(sqrt(unlist(case6$var.log.param))), mean(sqrt(unlist(case5$var.log.param))), mean(sqrt(unlist(case4$var.log.param))), mean(sqrt(unlist(case3$var.log.param))))
 @
 
 <<echo = FALSE, results = 'asis'>>=
-# TP (ratio = 1 and 4)
-# Direct
-# aa <- mean(log(1) <= log(unlist(case1$lambdas)) + zstar*unlist(case1$var.lambdas) & log(1) >= log(unlist(case1$lambdas)) - zstar*unlist(case1$var.lambdas)) # across all periods
-# bb <- mean(log(0.6) <= log(unlist(case6$lambdas)) + zstar*unlist(case6$var.lambdas) & log(0.6) >= log(unlist(case6$lambdas)) - zstar*unlist(case6$var.lambdas)) # across all periods
-# cc <- mean(log(0.5) <= log(unlist(case5$lambdas)) + zstar*unlist(case5$var.lambdas) & log(0.5) >= log(unlist(case5$lambdas)) - zstar*unlist(case5$var.lambdas)) # across all periods
-# dd <- mean(log(0.4) <= log(unlist(case4$lambdas)) + zstar*unlist(case4$var.lambdas) & log(0.4) >= log(unlist(case4$lambdas)) - zstar*unlist(case4$var.lambdas)) # across all periods
-# ee <- mean(log(0.3) <= log(unlist(case3$lambdas)) + zstar*unlist(case3$var.lambdas) & log(0.3) >= log(unlist(case3$lambdas)) - zstar*unlist(case3$var.lambdas)) # across all periods
-# r1 <- c(aa,bb,cc,dd,ee)
-
 cov <- c(mean(unlist(case1$coverage)), mean(unlist(case6$coverage)), mean(unlist(case5$coverage)), mean(unlist(case4$coverage)), mean(unlist(case3$coverage)))
 
 tab1 <- cbind(t1, rr1, sd, cov)
 rownames(tab1) <- c("RR = 1", "RR = 0.6", "RR = 0.5", "RR = 0.4", "RR = 0.3")
 colnames(tab1) <- c("Proportion of Significant Tests", "Bias", "Standard Deviation log(lambda)", "Coverage")
-xtable(tab1, digits = 4, caption = "CHECK THIS", align = "lcccc")
+xtable(tab1, digits = 4, caption = "The results from 10,000 permuted intervention allocations cross 9 time periods of historical data for 1,000 cases.", align = "lcccc")
 @
 
 

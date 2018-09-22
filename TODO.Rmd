@@ -13,10 +13,11 @@ knitr::opts_chunk$set(echo = TRUE)
 *
 
 #### Complete Tasks
-*
+* One function for estimating either lambda or gamma: `lambda-gamma-function.R`
 
 #### General Thoughts
 *
 
 #### General Organization
 * It seems that `test-positive-perm-example`, `test-positive-only`, and `test-positive-fraction-v-test-positive` are all out of date. Should be able to remove them from the folder, given the manuscript is most up-to-date.
+* Can remove casesOnlyFunction.R as it is now equivalent to lambda-gamma-function.R and less clean

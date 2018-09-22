@@ -1,9 +1,8 @@
 caseOnlyFunction <- function(dta, rrIN, period, ncases = 1000){
   # This function uses only the cases to estimate the lambda and get inference.
-  library(dplyr)
   set.seed(1234234) # Reproducibility
   
-  out <- out2 <- out3 <- out4 <- out5 <- out6 <-  NULL
+  #out <- out2 <- out3 <- out4 <- out5 <- out6 <-  NULL
   sigMatrix <-NULL
   TOTpvals <- vector("list", length(rrIN)) # p-values for the T-tests
   TOTtVals <- vector("list", length(rrIN)) # T test statistics
@@ -11,6 +10,7 @@ caseOnlyFunction <- function(dta, rrIN, period, ncases = 1000){
   var.log.lambdas <- vector('list', length(rrIN)) # storage of standard deviations
   varTvals <- vector('list', length(rrIN)) # not T statistics, but difference in arm specific means
   coverage <- vector('list', length(rrIN)) # coverage of log-lambda estimates
+  
   iter1 <- 1 # counts number of iterations (if there are 4 different relative risks, iter1 should end at 5)
   
   for (j in period){
@@ -41,7 +41,6 @@ caseOnlyFunction <- function(dta, rrIN, period, ncases = 1000){
       lambda.hat <- sum(nCases[tx.temp == 1])/sum(nCases[tx.temp == 0])
       var.log.lambda <- (16/(sum(nCases)^2))*(m/2)*vD
       
-     # coverage.v <- as.numeric((log(rrIN) <= log(lambda.hat) + 1.96*sqrt(var.log.lambda)) & (log(rrIN) >= log(lambda.hat) - 1.96*sqrt(var.log.lambda)))
       coverage.v <- as.numeric((between(log(rrIN), log(lambda.hat) - 1.96*sqrt(var.log.lambda), log(lambda.hat) + 1.96*sqrt(var.log.lambda))))
       out1 <- rbind(out, Tval)
       out2 <- rbind(out2, pval)
