@@ -1,21 +1,21 @@
-gamma_function <- function(dta, period, ncases = 1000, gamma){
+gamma_function <- function(dta, period, nobs = 1000, gamma){
   # It uses only the controls to get gamma where gamma is B/H 
   library(dplyr)
   
   out1 <- out2 <- out3 <- out4 <- out5 <- out6 <-  NULL
   sigMatrix <-NULL
-  TOTpvals <- vector("list", length(gamma)) # p-values for the T-tests
-  TOTtVals <- vector("list", length(gamma)) # T test statistics
-  params <- vector("list", length(gamma)) # storage of estimated params
-  var.log.params <- vector('list', length(gamma)) # storage of standard deviations
-  varTvals <- vector('list', length(gamma)) # not T statistics, but difference in arm specific means
-  coverage <- vector('list', length(gamma)) # coverage of log-lambda estimates
+  TOTpvals <- vector("list", length(period)) # p-values for the T-tests
+  TOTtVals <- vector("list", length(period)) # T test statistics
+  params <- vector("list", length(period)) # storage of estimated params
+  var.log.params <- vector('list', length(period)) # storage of standard deviations
+  varTvals <- vector('list', length(period)) # not T statistics, but difference in arm specific means
+  coverage <- vector('list', length(period)) # coverage of log-lambda estimates
   
   iter1 <- 1 # counts number of iterations (if there are 4 different relative risks, iter1 should end at 5)
   
   for (j in period){
     temp <- dta[dta$Period == j,] # subset data to just the time period of interest
-    n1 <- ncases
+    n1 <- nobs
     
     # Separate treatment allocations from other data
     txDta <- txtSet(temp)
@@ -23,9 +23,10 @@ gamma_function <- function(dta, period, ncases = 1000, gamma){
     out1 <- out2 <- out3 <- out4 <- out5 <- out6 <- NULL
     
     for (i in 1:ncol(txDta)){
+      temp2 <- temp
       tx.temp <- txDta[[i]] # Select the Treatment Allocation
-      temp$OFI[tx.temp == 1] <- temp$OFI[tx.temp == 1]*gamma
-      prop <- (temp$OFI/sum(temp$OFI))
+      temp2$OFI[tx.temp == 1] <- temp2$OFI[tx.temp == 1]*gamma
+      prop <- (temp2$OFI/sum(temp2$OFI))
       
       nOFI <- prop*n1 # Assign cases to clusters according to proportion of cases per cluster
       m <- length(prop[tx.temp == 1])
