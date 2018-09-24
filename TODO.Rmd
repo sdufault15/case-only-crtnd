@@ -10,13 +10,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 #### Active Tasks
-*
+* Determine when the estimated Var(logOR) is negative
+* Tidy up results of simulations - what are the informative plots that we want??
+
 
 #### Complete Tasks
 * One function for estimating either lambda or gamma: `lambda-gamma-function.R`
 
 #### General Thoughts
-*
+* It's seems obvious now that $\widehat{\lambda}_{RR} = \lambda_{RR}\times\lambda_{HCSB}$
 
 #### General Organization
 * It seems that `test-positive-perm-example`, `test-positive-only`, and `test-positive-fraction-v-test-positive` are all out of date. Should be able to remove them from the folder, given the manuscript is most up-to-date.

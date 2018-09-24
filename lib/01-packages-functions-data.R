@@ -12,6 +12,11 @@ library(tidyr)
 
 # Necessary functions
 source(here("lib", "txtSetFunction.R"))
+source(here("lib", "case-only-function.R"))
 
 load(here("data", "Random10000Allocations.RData"))
 dta <- Random10000Allocations %>% select(-X)
+
+library(scales)
+library(RColorBrewer)
+myColors <- brewer.pal(8, 'Set2')

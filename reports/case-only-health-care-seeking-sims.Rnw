@@ -3,14 +3,21 @@
 \usepackage{placeins}
 
 \title{Case-Only Under Differential Care-Seeking Behavior}
-\date{May 18, 2018}
+\date{September 24, 2018}
 \author{Suzanne M. Dufault}
 
 \begin{document}
 \maketitle
 \tableofcontents
 
-\abstract{These simulations address three different levels of differential care-seeking behavior: 1) low, 2) medium, and 3) high.}
+<<r global_options, include=FALSE>>=
+knitr::opts_chunk$set(fig.width=6, fig.height=8, fig.path='../graphs/',
+                       warning=FALSE, message=FALSE, fig.align = 'center')
+@
+
+\begin{abstract}
+These simulations address three different levels of differential care-seeking behavior: 1) low, 2) medium, and 3) high.
+\end{abstract}
 
 <<echo = FALSE>>=
 library(here)
@@ -32,34 +39,102 @@ In the event of an intervention effect of $\lambda$, the intervention effect is 
 
 \section{Simulations}
 
-\subsection{At the Null} \FloatBarrier
-
 <<echo = FALSE>>=
-load(here("data", "hcsb-NULL-09212018.RData"))
+load(here("data", "case-only/all-rr1-hcsb1-09222018.RData"))
+load(here("data", "case-only/all-rr6-hcsb1-09222018.RData"))
+load(here("data", "case-only/all-rr5-hcsb1-09222018.RData"))
+load(here("data", "case-only/all-rr4-hcsb1-09222018.RData"))
+load(here("data", "case-only/all-rr3-hcsb1-09222018.RData"))
+
+load(here("data", "case-only/all-rr1-hcsb-LOW-09222018.RData"))
+load(here("data", "case-only/all-rr6-hcsb-LOW-09222018.RData"))
+load(here("data", "case-only/all-rr5-hcsb-LOW-09222018.RData"))
+load(here("data", "case-only/all-rr4-hcsb-LOW-09222018.RData"))
+load(here("data", "case-only/all-rr3-hcsb-LOW-09222018.RData"))
+
+load(here("data", "case-only/all-rr1-hcsb-MED-09222018.RData"))
+load(here("data", "case-only/all-rr6-hcsb-MED-09222018.RData"))
+load(here("data", "case-only/all-rr5-hcsb-MED-09222018.RData"))
+load(here("data", "case-only/all-rr4-hcsb-MED-09222018.RData"))
+load(here("data", "case-only/all-rr3-hcsb-MED-09222018.RData"))
+
+load(here("data", "case-only/all-rr1-hcsb-HIGH-09222018.RData"))
+load(here("data", "case-only/all-rr6-hcsb-HIGH-09222018.RData"))
+load(here("data", "case-only/all-rr5-hcsb-HIGH-09222018.RData"))
+load(here("data", "case-only/all-rr4-hcsb-HIGH-09222018.RData"))
+load(here("data", "case-only/all-rr3-hcsb-HIGH-09222018.RData"))
 @
 
-<<echo = FALSE>>=
-hist(unlist(hcsb1$param.est), breaks = 100, col = 'gray',
-     main = expression(paste("Distribution of the Estimated Health-Care Seeking Behavior Effect (", gamma, ")")),
-     sub = "Estimation on Historic Data without Modification",
-     xlab = expression(gamma))
+<<distNULL, echo = FALSE>>=
+par(mfrow = c(3,1))
+plot(density(unlist(rr1h$intervention$lambda.int.est)), col = alpha(myColors[1], alpha = 0.7), 
+     xlim = c(0.2, 2.5), main = "Case-Only Estimated Intervention Effect", xlab = expression(lambda))
+polygon(density(unlist(rr1h$intervention$lambda.int.est)), col = alpha(myColors[1], alpha = 0.5), border = NA)
+polygon(density(unlist(rr1m$intervention$lambda.int.est)), col = alpha(myColors[2], alpha = 0.5), border = NA)
+polygon(density(unlist(rr1l$intervention$lambda.int.est)), col = alpha(myColors[3], alpha = 0.5), border = NA)
+polygon(density(unlist(rr1$intervention$lambda.int.est)), col = alpha(myColors[4], alpha = 0.5), border = NA)
+legend('right', legend = c("No Diff. HCSB", "Low Diff. HCSB", "Medium Diff. HCSB", "High Diff. HCSB"), col = alpha(myColors[4:1], alpha = 0.5), lty = 1, lwd = 3)
+abline(v = 1, col = myColors[8], lwd = 2, lty = 2)
+text(x = 1.15, y = 3, labels = "True RR = 1", col = myColors[8])
+
+plot(density(unlist(rr1h$hcsb$lambda.hcsb.est)), col = alpha(myColors[1], alpha = 0.7), 
+     xlim = c(0.2, 2.5), main = "Case-Only Estimated HCSB Effect", xlab = expression(lambda))
+polygon(density(unlist(rr1h$hcsb$lambda.hcsb.est)), col = alpha(myColors[1], alpha = 0.5), border = NA)
+polygon(density(unlist(rr1m$hcsb$lambda.hcsb.est)), col = alpha(myColors[2], alpha = 0.5), border = NA)
+polygon(density(unlist(rr1l$hcsb$lambda.hcsb.est)), col = alpha(myColors[3], alpha = 0.5), border = NA)
+polygon(density(unlist(rr1$hcsb$lambda.hcsb.est)), col = alpha(myColors[4], alpha = 0.5), border = NA)
+legend('right', legend = c("No Diff. HCSB", "Low Diff. HCSB", "Medium Diff. HCSB", "High Diff. HCSB"), col = alpha(myColors[4:1], alpha = 0.5), lty = 1, lwd = 3)
+abline(v = 1, col = myColors[4], lwd = 2, lty = 2)
+abline(v = 0.95, col = myColors[3], lwd = 2, lty = 2)
+abline(v = 0.85, col = myColors[2], lwd = 2, lty = 2)
+abline(v = 0.5, col = myColors[1], lwd = 2, lty = 2)
+
+plot(density(unlist(rr1h$OR$lambda.OR.est)), col = alpha(myColors[1], alpha = 0.7), main = "OR Estimated Intervention Effect", xlab = expression(lambda),
+     xlim = c(0.2, 2.5))
+polygon(density(unlist(rr1h$OR$lambda.OR.est)), col = alpha(myColors[1], alpha = 0.2), border = NA)
+polygon(density(unlist(rr1m$OR$lambda.OR.est)), col = alpha(myColors[2], alpha = 0.2), border = NA)
+polygon(density(unlist(rr1l$OR$lambda.OR.est)), col = alpha(myColors[3], alpha = 0.2), border = NA)
+polygon(density(unlist(rr1$OR$lambda.OR.est)), col = alpha(myColors[4], alpha = 0.2), border = NA)
+legend('right', legend = c("No Diff. HCSB", "Low Diff. HCSB", "Medium Diff. HCSB", "High Diff. HCSB"), col = alpha(myColors[4:1], alpha = 0.5), lty = 1, lwd = 3)
+abline(v = 1, col = myColors[8], lwd = 2, lty = 2)
+text(x = 1.2, y = 1.55, labels = "True RR = 1", col = myColors[8])
 @
 
-\FloatBarrier
+<<dist6, echo = FALSE>>=
+par(mfrow = c(3,1))
+plot(density(unlist(rr6h$intervention$lambda.int.est)), col = alpha(myColors[1], alpha = 0.7), 
+     xlim = c(0.1, 1.5), main = "Case-Only Estimated Intervention Effect", xlab = expression(lambda))
+polygon(density(unlist(rr6h$intervention$lambda.int.est)), col = alpha(myColors[1], alpha = 0.5), border = NA)
+polygon(density(unlist(rr6m$intervention$lambda.int.est)), col = alpha(myColors[2], alpha = 0.5), border = NA)
+polygon(density(unlist(rr6l$intervention$lambda.int.est)), col = alpha(myColors[3], alpha = 0.5), border = NA)
+polygon(density(unlist(rr6$intervention$lambda.int.est)), col = alpha(myColors[4], alpha = 0.5), border = NA)
+legend('right', legend = c("No Diff. HCSB", "Low Diff. HCSB", "Medium Diff. HCSB", "High Diff. HCSB"), col = alpha(myColors[4:1], alpha = 0.5), lty = 1, lwd = 3)
+abline(v = 0.6, col = myColors[8], lwd = 2, lty = 2)
+text(x = 0.75, y = 4, labels = "True RR = 0.6", col = myColors[8])
 
-\subsection{With an Intervention}
-<<echo = FALSE>>=
-load(here("data", "case-only/hcsb-HIGH-09212018.RData"))
-load(here("data", "case-only/hcsb-MED-09212018.RData"))
-load(here("data", "case-only/hcsb-LOW-09212018.RData"))
+plot(density(unlist(rr6h$hcsb$lambda.hcsb.est)), col = alpha(myColors[1], alpha = 0.7), 
+     xlim = c(0.2, 2.5), main = "Case-Only Estimated HCSB Effect", xlab = expression(lambda))
+polygon(density(unlist(rr6h$hcsb$lambda.hcsb.est)), col = alpha(myColors[1], alpha = 0.5), border = NA)
+polygon(density(unlist(rr6m$hcsb$lambda.hcsb.est)), col = alpha(myColors[2], alpha = 0.5), border = NA)
+polygon(density(unlist(rr6l$hcsb$lambda.hcsb.est)), col = alpha(myColors[3], alpha = 0.5), border = NA)
+polygon(density(unlist(rr6$hcsb$lambda.hcsb.est)), col = alpha(myColors[4], alpha = 0.5), border = NA)
+legend('right', legend = c("No Diff. HCSB", "Low Diff. HCSB", "Medium Diff. HCSB", "High Diff. HCSB"), col = alpha(myColors[4:1], alpha = 0.5), lty = 1, lwd = 3)
+abline(v = 1, col = myColors[4], lwd = 2, lty = 2)
+abline(v = 0.95, col = myColors[3], lwd = 2, lty = 2)
+abline(v = 0.85, col = myColors[2], lwd = 2, lty = 2)
+abline(v = 0.5, col = myColors[1], lwd = 2, lty = 2)
+
+plot(density(unlist(rr6h$OR$lambda.OR.est)), col = alpha(myColors[1], alpha = 0.7), main = "OR Estimated Intervention Effect", xlab = expression(lambda),
+     xlim = c(0.1, 1.5))
+polygon(density(unlist(rr6h$OR$lambda.OR.est)), col = alpha(myColors[1], alpha = 0.2), border = NA)
+polygon(density(unlist(rr6m$OR$lambda.OR.est)), col = alpha(myColors[2], alpha = 0.2), border = NA)
+polygon(density(unlist(rr6l$OR$lambda.OR.est)), col = alpha(myColors[3], alpha = 0.2), border = NA)
+polygon(density(unlist(rr6$OR$lambda.OR.est)), col = alpha(myColors[4], alpha = 0.2), border = NA)
+legend('right', legend = c("No Diff. HCSB", "Low Diff. HCSB", "Medium Diff. HCSB", "High Diff. HCSB"), col = alpha(myColors[4:1], alpha = 0.5), lty = 1, lwd = 3)
+abline(v = 0.6, col = myColors[8], lwd = 2, lty = 2)
+text(x = 0.75, y = 2.55, labels = "True RR = 0.6", col = myColors[8])
 @
 
-<<echo = FALSE>>=
-s1 <- summary(unlist(hcsb.05$param.est))
-s2 <- summary(unlist(hcsb.15$param.est))
-s3 <- summary(unlist(hcsb.50$param.est))
 
-rbind(s1, s2, s3)
-@
 
 \end{document}
