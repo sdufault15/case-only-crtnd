@@ -1,0 +1,66 @@
+###############################
+# Suzanne Dufault
+# All HCSB runs for Test-Postive Fraction and Random Effects
+# October 3, 2018
+###############################
+
+load("Random10000Allocations.RData")
+dta <- subset(Random10000Allocations, select = -X)
+source("lib/txtSetFunction.R")
+source("lib/quadraticFunction.R")
+source("lib/hcsb-tpf-re-function.R")
+library(dplyr)
+library(splitstackshape)
+library(rootSolve)
+library(tidyr)
+library(lme4)
+
+period1 <- c("03_05", "05_06", "06_07", "07_08", "08_10", "10_11", "11_12", "12_13", "13_14")
+
+## No Differential HCSB
+rr1 <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 1, lambda.hcsb = 1)
+save(rr1, file = "case-only-comparison/all-comp-rr1-hcsb1-09222018.RData")
+rr6 <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.6, lambda.hcsb = 1)
+save(rr6, file = "case-only-comparison/all-comp-rr6-hcsb1-09222018.RData")
+rr5 <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.5, lambda.hcsb = 1)
+save(rr5, file = "case-only-comparison/all-comp-rr5-hcsb1-09222018.RData")
+rr4 <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.4, lambda.hcsb = 1)
+save(rr4, file = "case-only-comparison/all-comp-rr4-hcsb1-09222018.RData")
+rr3 <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.3, lambda.hcsb = 1)
+save(rr3, file = "case-only-comparison/all-comp-rr3-hcsb1-09222018.RData")
+
+# Low HCSB (5%)
+rr1l <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 1, lambda.hcsb = 0.95)
+save(rr1l, file = "case-only-comparison/all-comp-rr1-hcsb-LOW-09222018.RData")
+rr6l <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.6, lambda.hcsb = 0.95)
+save(rr6l, file = "case-only-comparison/all-comp-rr6-hcsb-LOW-09222018.RData")
+rr5l <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.5, lambda.hcsb = 0.95)
+save(rr5l, file = "case-only-comparison/all-comp-rr5-hcsb-LOW-09222018.RData")
+rr4l <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.4, lambda.hcsb = 0.95)
+save(rr4l, file = "case-only-comparison/all-comp-rr4-hcsb-LOW-09222018.RData")
+rr3l <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.3, lambda.hcsb = 0.95)
+save(rr3l, file = "case-only-comparison/all-comp-rr3-hcsb-LOW-09222018.RData")
+
+# Medium HCSB (15%)
+rr1m <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 1, lambda.hcsb = 0.85)
+save(rr1m, file = "case-only-comparison/all-comp-rr1-hcsb-MED-09222018.RData")
+rr6m <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.6, lambda.hcsb = 0.85)
+save(rr6m, file = "case-only-comparison/all-comp-rr6-hcsb-MED-09222018.RData")
+rr5m <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.5, lambda.hcsb = 0.85)
+save(rr5m, file = "case-only-comparison/all-comp-rr5-hcsb-MED-09222018.RData")
+rr4m <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.4, lambda.hcsb = 0.85)
+save(rr4m, file = "case-only-comparison/all-comp-rr4-hcsb-MED-09222018.RData")
+rr3m <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.3, lambda.hcsb = 0.85)
+save(rr3m, file = "case-only-comparison/all-comp-rr3-hcsb-MED-09222018.RData")
+
+# High HCSB (50%)
+rr1h <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 1, lambda.hcsb = 0.5)
+save(rr1h, file = "case-only-comparison/all-comp-rr1-hcsb-HIGH-09222018.RData")
+rr6h <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.6, lambda.hcsb = 0.5)
+save(rr6h, file = "case-only-comparison/all-comp-rr6-hcsb-HIGH-09222018.RData")
+rr5h <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.5, lambda.hcsb = 0.5)
+save(rr5h, file = "case-only-comparison/all-comp-rr5-hcsb-HIGH-09222018.RData")
+rr4h <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.4, lambda.hcsb = 0.5)
+save(rr4h, file = "case-only-comparison/all-comp-rr4-hcsb-HIGH-09222018.RData")
+rr3h <- hcsb_tpf_re_function(data = dta, period = period1, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 0.3, lambda.hcsb = 0.5)
+save(rr3h, file = "case-only-comparison/all-comp-rr3-hcsb-HIGH-09222018.RData")

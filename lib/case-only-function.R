@@ -164,6 +164,3 @@ case_only_function <- function(data, period, n.obs.pos = 1000, n.obs.neg = 1000,
   out <- list(intervention = intervention.estimation, hcsb = hcsb.estimation, OR = OR.estimation)
   return(out)
 }
-
-
-list.hcsb <- list()
