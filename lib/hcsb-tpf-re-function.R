@@ -12,6 +12,9 @@ hcsb_tpf_re_function <- function(data, period, n.obs.pos = 1000, n.obs.neg = 100
   # lambda.int = the true intervention relative risk
   # lambda. hcsb = the true health care seeking behavior relative risk
   library(splitstackshape)
+  library(dplyr)
+  library(tidyr)
+  library(lme4)
   
   lambda.tpf.list <- lambda.re.list <- vector('list', length(period))
   v.log.lambda.tpf.list <- v.log.lambda.re.list <- vector('list', length(period))
