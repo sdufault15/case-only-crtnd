@@ -83,7 +83,7 @@ hcsb_tpf_re_function <- function(data, period, n.obs.pos = 1000, n.obs.neg = 100
       me1 <- glmer(teststatus ~ tx.temp + (1 | id ), family = binomial, data = tempLong) 
       re.int.hat <- exp(summary(me1)$coefficients[2])
       var.log.re.int <- (summary(me1)$coefficients[4])^2
-      coverage.log.re.int <- between(lambda.int,
+      coverage.log.re.int <- between(log(lambda.int),
                                      log(re.int.hat) - 1.96*summary(me1)$coefficients[4],
                                      log(re.int.hat) + 1.96*summary(me1)$coefficients[4])
       pvals.log.re.int <- summary(me1)$coefficients[2,4]

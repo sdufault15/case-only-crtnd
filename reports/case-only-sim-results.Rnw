@@ -2,7 +2,7 @@
 \usepackage[margin = 1in]{geometry}
 \usepackage{placeins}
 
-\title{Case-Only Simulation Results}
+\title{Test-Positive Only Simulation Performance Results}
 \date{September 21, 2018}
 \author{Suzanne Dufault}
 
@@ -16,38 +16,21 @@ knitr::opts_chunk$set(fig.width=6, fig.height=4, fig.path='../graphs/',
 
 <<echo = FALSE>>=
 library(here)
+library(dplyr)
 library(xtable)
-load(here("data", "case-only/case-only-NULL-09212018.RData"))
-load(here("data", "case-only/case-only-6-09212018.RData"))
-load(here("data", "case-only/case-only-5-09212018.RData"))
-load(here("data", "case-only/case-only-4-09212018.RData"))
-load(here("data", "case-only/case-only-3-09212018.RData"))
-
-period1 <- c("03_05", "05_06", "06_07", "07_08", "08_10", "10_11", "11_12", "12_13", "13_14")
-zstar <- 1.96
+load(here("data", "performance-metrics.RData"))
 @
 
-<<echo = FALSE, results = 'asis'>>=
-t1 <- c(mean(unlist(case1$pVals) <= 0.05), mean(unlist(case6$pVals) <= 0.05), mean(unlist(case5$pVals) <= 0.05), mean(unlist(case4$pVals) <= 0.05), mean(unlist(case3$pVals) <= 0.05))
-
-rr1 <- c(mean(unlist(case1$param.est) - 1), mean(unlist(case6$param.est) - 0.6), mean(unlist(case5$param.est) - 0.5), mean(unlist(case4$param.est) - 0.4), mean(unlist(case3$param.est) - 0.3))
-
-pp1 <- (unlist(lapply(case1$var.log.param, function(x) mean(sqrt(x)))))
-names(pp1) <- c(paste0(period1))
-pp2 <- (unlist(lapply(case6$var.log.param, function(x) mean(sqrt(x)))))
-pp3 <- (unlist(lapply(case5$var.log.param, function(x) mean(sqrt(x)))))
-pp4 <- (unlist(lapply(case4$var.log.param, function(x) mean(sqrt(x)))))
-pp5 <- (unlist(lapply(case3$var.log.param, function(x) mean(sqrt(x)))))
-sd <- c(mean(sqrt(unlist(case1$var.log.param))), mean(sqrt(unlist(case6$var.log.param))), mean(sqrt(unlist(case5$var.log.param))), mean(sqrt(unlist(case4$var.log.param))), mean(sqrt(unlist(case3$var.log.param))))
-@
+These are the results of the test-positive only approach to estimation of the intervention relative risk $\lambda$ when there is no differential health-care--seeking behavior by treatment arm. 
 
 <<echo = FALSE, results = 'asis'>>=
-cov <- c(mean(unlist(case1$coverage)), mean(unlist(case6$coverage)), mean(unlist(case5$coverage)), mean(unlist(case4$coverage)), mean(unlist(case3$coverage)))
+p1 <- performance$power %>% filter(method == "power.lambda.est", hcsb == 1) %>% select(-method, -hcsb)
+c1 <- performance$coverage %>% filter(method == "cov.lambda.est", hcsb == 1) %>% select(-method, -hcsb)
+b1 <- performance$bias %>% filter(method == "bias.lambda.est", hcsb == 1) %>% select(-method, -hcsb)
 
-tab1 <- cbind(t1, rr1, sd, cov)
-rownames(tab1) <- c("RR = 1", "RR = 0.6", "RR = 0.5", "RR = 0.4", "RR = 0.3")
-colnames(tab1) <- c("Proportion of Significant Tests", "Bias", "Standard Deviation log(lambda)", "Coverage")
-xtable(tab1, digits = 4, caption = "The results from 10,000 permuted intervention allocations cross 9 time periods of historical data for 1,000 cases.", align = "lcccc")
+tab1 <- full_join(full_join(b1, p1, by = "RR"), c1, by = "RR")
+colnames(tab1) <- c("Bias", "Power", "Coverage")
+xtable(tab1, align = 'llccc', caption = "These results correspond to 10,000 permuted intervention allocations across 9 time periods of historical data for 1,000 cases. Power refers to the proportion of simulations that returned a significant T-statistic at the 0.05-level. The remaining columns refer to the estimated intervention RR. As shown in the bias column, on average the estimated intervention RR was estimated to be slightly closer to the null than the true intervention affect.") %>% print(include.rownames = FALSE)
 @
 
 
