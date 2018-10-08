@@ -1,4 +1,4 @@
-hcsb_tpf_re_function <- function(data, period, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 1, lambda.hcsb = 1, clust){
+hcsb_tpf_function <- function(data, period, n.obs.pos = 1000, n.obs.neg = 1000, lambda.int = 1, lambda.hcsb = 1){
   # This function can apply differential health care seeking behavior (lambda.hcsb) as well as an intervention
   # RR. 
   # It then estimates from the data and permuted treatment allocations estimates of the intervention RR and
@@ -11,14 +11,7 @@ hcsb_tpf_re_function <- function(data, period, n.obs.pos = 1000, n.obs.neg = 100
   # n.obs.neg = the number of test negatives desired
   # lambda.int = the true intervention relative risk
   # lambda. hcsb = the true health care seeking behavior relative risk
-  library(splitstackshape)
   library(dplyr)
-  library(tidyr)
-  library(lme4)
-  library(doParallel)
-  
-  cl <- makeCluster(clust)
-  registerDoParallel(cl)
   
   results <- vector('list', length(period))
   
@@ -33,14 +26,8 @@ hcsb_tpf_re_function <- function(data, period, n.obs.pos = 1000, n.obs.neg = 100
     txDta <- txtSet(current)
     m <- nrow(current)/2
     
-    
-    out <- foreach(i = colnames(txDta), .packages = c('dplyr', 'rootSolve'), .combine = 'rbind') %dopar% {
-      quad <- function(x, ratio){rootSolve::uniroot.all(function(lambda){
-        # This function takes in a difference of cluster means (T) and solves a quadratic equation to 
-        # estimate the relative risk (lambda). This also requires the ratio of controls to cases to be 
-        # specified
-        x - (2*ratio*(lambda^2 - 1)/(((2 + ratio)*lambda + ratio)*(ratio*lambda + (2 + ratio))))}, c(-5,5))
-      }
+    out <- NULL
+    for (i in colnames(txDta)) {
       temp <- current # resetting the working data
       tx.temp <- txDta %>% select(i) %>% unlist() # selecting a specific treatment allocation
       
@@ -75,25 +62,9 @@ hcsb_tpf_re_function <- function(data, period, n.obs.pos = 1000, n.obs.neg = 100
       # To get the estimated variances, take the average of the variance of the logged proportions in each arm
       var.tpf.int <- mean(c(var(prop[tx.temp == 1]), var(prop[tx.temp == 0])))
       
-      # #### Random Effects Approach:
-      # # NEED TO RESHAPE THE DATA
-      # freq.1 <- n.cases
-      # freq.0 <- n.controls
-      # tempWide <- data.frame(id = current$clust, tx.temp, freq.1, freq.0)
-      # tempLong <- tempWide %>% gather("teststatus", "count", 3:4) %>% mutate(teststatus = ifelse(teststatus == "freq.1", 1, 0),
-      #                                                                        v = round(count)) %>% select(-count)
-      # tempLong <- expandRows(tempLong, "v", count.is.col = TRUE, drop = TRUE)
-      # 
-      # me1 <- glmer(teststatus ~ tx.temp + (1 | id ), family = binomial, data = tempLong) 
-      # re.int.hat <- exp(summary(me1)$coefficients[2])
-      # var.log.re.int <- (summary(me1)$coefficients[4])^2
-      # coverage.log.re.int <- between(log(lambda.int),
-      #                                log(re.int.hat) - 1.96*summary(me1)$coefficients[4],
-      #                                log(re.int.hat) + 1.96*summary(me1)$coefficients[4])
-      # pvals.log.re.int <- summary(me1)$coefficients[2,4]
       
       # Storage for each treatment allocation within one period
-      data.frame(tpf.int.hat, var.tpf.int, coverage.tpf.int, pvals.tpf.int, T.stats.tpf.int)#, 
+      out <- bind_rows(out, data.frame(tpf.int.hat, var.tpf.int, coverage.tpf.int, pvals.tpf.int, T.stats.tpf.int))#, 
                 # re.int.hat, var.log.re.int, coverage.log.re.int, pvals.log.re.int)
 
     }
