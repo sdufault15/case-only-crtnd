@@ -14,87 +14,88 @@
 \section{Set Up}
 Existing methods for estimating the RR from CR-TND data require the use of test-positive (case) and test-negative (control) counts from each cluster. Because the treatment is randomized, it is possible to estimate the intervention RR using only the test-positive counts. This approach is explored here.
 
-Suppose there are $2m$ clusters in the study with $m$ assigned to the intervention and the remaining $m$ to control. Let $j \in I$ specify a cluster $j$ in the intervention arm and $j \in C$ be a cluster $j$ in the control arm. In each cluster, the number of test-positive individuals $n_{D_j}$ is recorded. A proposed test-statistic is then:
+Suppose there are $2m$ clusters in the study with $m$ assigned to the intervention and the remaining $m$ to control. The total number of test-positive individuals is denoted $n_D$. The sum of test-positives from the intervention arm are denoted $A_+$ and those from the control arm, $G_+$.
 
-\begin{align}
-T &= \sum\limits_{j\in I} n_{D_j} - \sum\limits_{j\in C}n_{D_j}\\
- &= n_{D_I} - n_{D_C}
-\end{align}
+
+\begin{equation}
+T = A_+ - G_+
+\end{equation}
 
 \section{At the Null}
 \subsection{Total}
 At the null, we expect half of all cases ($n_D$) to fall in each arm:
 \begin{equation}
-E[n_{D_I}] = E[n_{D_C}] = \frac{n_D}{2}
+E[A_+] = E[G_+] = \frac{n_D}{2}
 \end{equation}
 
 Hence, at the null, $T = 0$ 
 \begin{align}
-E[T] &= E[n_{D_I}] - E[n_{D_C}] \\
- &= E[n_{D_I}] - (n_D - E[n_{D_I}]) \\
- &= 2E[n_{D_I}] - n_D \\
+E[T] &= E[A_+] - E[G_+] \\
+ &= E[A_+] - (n_D - E[G_+]) \\
+ &= 2E[A_+] - n_D \\
  &= 2\frac{n_D}{2} - n_D \\
  &= 0
 \end{align}
 
-\subsection{Variance}
-The variance of $T$ is estimated as follows:
+\subsection{Variance of Sample Counts}
+First, let's define $Var(A_+)$ as it will come up often:
 
+The variance of a sample sum can be estimated as follows in the setting of sampling without replacement:
 \begin{align}
-Var(T) &= Var(2\times[n_{D_I}] - n_D) \\
- &= 2^2Var(n_{D_I})\\
- &= 2^2 \frac{(2m)^2}{m} \frac{m}{2m-1}\frac{\sigma^2}{m}\\
- &= \frac{16m}{2m-1}\sigma^2
+Var(A_+) &= n\sigma^2\frac{N-n}{N-1} \\
+ &= m\sigma^2\frac{m}{2m-1}
 \end{align}
 
-where $\sigma^2$ is the population variance of the $2m$ test-positive counts.
+We can estimate the population variance ($\sigma^2$) by using the sample variance of counts in either the treatment or control arm or both. Let $V_D$ represent the pooled (averaged) sample variances (estimated with $n - 1$ in the denominators) from the treatment and control arm. Then,
+
+\begin{align}
+Var(A_+) &= m V_D \frac{m}{2m} \\
+ &= \frac{m}{2}V_D
+\end{align}
+
+The variance of $T$ is then estimated as follows:
+
+\begin{align}
+Var(T) &= Var(A_+ - G_+) \\
+ &= Var(A_+ - (n_D - A_+)) \\
+ &= 2^2 Var(A_+) \\
+ &= 4 \times \frac{m}{2}V_D \\
+ &= 2mV_D
+\end{align}
 
 \subsection{Standardized Statistic}
 
-Hence, the standardized test statistic is $\frac{T}{\sqrt{\frac{16m}{2m-1}\sigma^2}} \sim N(0,1)$.
+Hence, the standardized test statistic is $\frac{T}{\sqrt{2mV_D}} \sim N(0,1)$.
 
 \section{Recovering the Intervention RR}
 When an intervention is applied to reduce the number of cases in the intervention arm, we would like to estimate the intervention effect through the RR ($\lambda$). In the test-positive setting, this can be accomplished through a simple ratio of the sums in the two arms:
 
 \begin{align}
-\lambda &= \frac{n_{D_I}}{n_{D_C}} \\
- &= \frac{n_{D_I}}{n_D - n_{D_I}}
+\lambda &= \frac{A_+}{G_+} \\
+ &= \frac{A_+}{n_D - A_+}
 \end{align}
 
 \subsection{Variance of the Intervention RR}
 
-In order to estimate the variance of the intervention RR $\lambda$, we can use the delta method. We know the properties of $n_{D_I}$, and $\lambda$ is a simple transformation of $n_{D_I}$.
+In order to estimate the variance of the intervention RR $\lambda$, we can use the delta method. We know the properties of $A_+$, and $\lambda$ is a simple transformation of $A_+$.
 
-Hence if $x = n_{D_I}$:
+Hence if $x = A_+$:
 \begin{align}
 g(x) &= \frac{x}{n_D - x}\\
-g'(x) &= \frac{n_D}{(n_D - x)^2}
+g'(x) &= \frac{n_D}{x(n_D - x)}
 \end{align}
 
-Implying:
+where $n_D$ is fixed and $x$ is the random variable. 
+
 \begin{align}
-\hat{\lambda} &\approx N\left(\lambda, \left[ \left(\frac{n_D}{(n_D - x)^2} \right)^2 Var(x) \right]\right) \\
- &= N\left(\lambda, \left[ \left(\frac{n_D}{(n_D - n_{D_I})^2} \right)^2 Var(n_{D_I}) \right]\right)\\
- &= N\left(\lambda, \left[ \left( \frac{n_D}{(n_D - n_{D_I})^2}\right)^2 \frac{4m^2}{m}\frac{m}{2m-1}\frac{\sigma^2}{m} \right]\right)\\
- &= N\left(\lambda, \left[ \left( \frac{n_D}{(n_D - n_{D_I})^2}\right)^2\frac{4m}{2m-1}\sigma^2 \right]\right)
+Var(\log \lambda) &= Var(\log \frac{x}{n_D - x}) \\
+ &\approx f'(x)^2Var(x) \hspace{5em} \textnormal{via delta method}\\
+ &= \frac{n_D^2}{x^2(n_D - x)^2}Var(x) \\
+ &= \frac{n_D^2}{\left(\frac{n_D}{2}\right)^2\left(\frac{n_D}{2}\right)^2} Var(x) \hspace{3em} \textnormal{at the null } \frac{n_D}{2} = x = n_D - x\\
+ &= \frac{16}{n_D^2}Var(x) \\
+ &= \frac{16}{n_D^2}\frac{m}{2}V_D
 \end{align}
 
 
-We know $Var(T)$, but in order to estimate it, we need to replace the population variance $\sigma^2$ with an estimate. 
-\begin{align}
-\hat{Var}(T) &= 2^2\hat{Var}(n_{D_I})\\
- &= 4 (2m)^2\frac{1}{2}\frac{s^2}{m}\\
- &= 8ms^2
-\end{align}
-
-where $s^2 = \frac{1}{m-1} \sum\limits_{j\in I, j = 1}^m (n_{D_j} - \bar{n}_{D_J})^2$. Hence, we can compare $T/\sqrt{8ms^2}$ to a T distribution with 2(m-1) degrees of freedom.
-
-The same is true for estimating $Var(\lambda)$.
-\begin{align}
-Var(\lambda) &= \left( \frac{n_D}{(n_D - n_{D_I})^2}\right)^2 Var(n_{D_I})\\
-\hat{Var(\lambda)} &= \left(\frac{n_D}{(n_D - n_{D_I})^2}\right)^2 \hat{Var}(n_{D_I}) \\
- &= \left(\frac{n_D}{(n_D - n_{D_I})^2}\right)^2 4m^2 \frac{1}{2}\frac{s^2}{m}\\
- &= \left(\frac{n_D}{(n_D - n_{D_I})^2}\right)^2 2ms^2
-\end{align}
 
 \end{document}
