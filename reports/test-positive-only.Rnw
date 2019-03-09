@@ -5,7 +5,7 @@
 
 \title{A Case-Only Approach to Estimating the RR in the CR-TND}
 \author{Suzanne Dufault}
-\date{March 2, 2018}
+\date{March 2, 2019}
 
 \begin{document}
 \maketitle
