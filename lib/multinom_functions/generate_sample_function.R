@@ -1,5 +1,6 @@
-generate_function <- function(cluster, lambda, n, tx, case_proportions, control_proportions, print = FALSE){
+generate_function <- function(cluster, lambda, hcsb, n, tx, case_proportions, control_proportions, print = FALSE){
   # lambda is a vector of lambdas
+  # hcsb is a vector of hcsbs
   # n is a vector of ns
   # cluster is a vector of cluster ids
   # tx is a vector of 1s and 0s denoting intervention assignment
@@ -10,12 +11,14 @@ generate_function <- function(cluster, lambda, n, tx, case_proportions, control_
   
   for (size in n){
     for (lamb in lambda){
-      out <- rbind(out, cbind(cluster, tx, lamb, size, 
-                              cases = multinom_sample_function(lambda = lamb, vecP.observed = case_proportions, tx.status = tx, n = size), 
-                              OFIs = multinom_sample_function(lambda = 1, vecP.observed = control_proportions, tx.status = tx, n = 4*size)))
+      for (hc in hcsb){
+      out <- rbind(out, cbind(cluster, tx, lamb, size, hc,
+                              cases = multinom_sample_function_hcsb(lambda = lamb, hcsb = hc, vecP.observed = case_proportions, tx.status = tx, n = size), 
+                              OFIs = multinom_sample_function_hcsb(lambda = 1, hcsb = hc, vecP.observed = control_proportions, tx.status = tx, n = 4*size)))
+      }
     }
   }
   out <- data.frame(out, row.names = NULL)
-  names(out) <- c("Cluster", "Treatment", "lambda", "size", "cases", "OFIs")
+  names(out) <- c("Cluster", "Treatment", "lambda", "size", "hcsb", "cases", "OFIs")
   return(out)
 }
