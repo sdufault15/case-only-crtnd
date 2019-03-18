@@ -9,3 +9,4 @@ This repository is organized in the following fashion:
 * **docs** contains any finalized pdf reports produced with the code from lib
 * **reports** contains the .Rmd files used to generate the reports contained in docs
 * **sandbox** contains code that is in progress or code that is used to generate the reports/docs
+* **analysis** contains the R scripts that were run either locally or on the cluster to generate the results used in the reports/docs

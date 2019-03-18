@@ -21,5 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 * It's seems obvious now that $\widehat{\lambda}_{RR} = \lambda_{RR}\times\lambda_{HCSB}$
 
 #### General Organization
-* It seems that `test-positive-perm-example`, `test-positive-only`, and `test-positive-fraction-v-test-positive` are all out of date. Should be able to remove them from the folder, given the manuscript is most up-to-date.
+* It seems that `test-positive-perm-example` and `test-positive-fraction-v-test-positive` are all out of date. Should be able to remove them from the folder, given the manuscript is most up-to-date.
 * Can remove casesOnlyFunction.R as it is now equivalent to lambda-gamma-function.R and less clean
+
+* Should be able to delete non-hcsb functions as they have all been incorporated now.
