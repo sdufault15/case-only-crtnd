@@ -1,4 +1,4 @@
-sample_size_function <- function(df, periods, lambdas = c(1,0.6,0.5, 0.4,0.3), ns = c(200, 400, 600, 800, 1000), print = FALSE){
+sample_size_function <- function(df, periods, lambdas = c(1,0.6,0.5, 0.4,0.3), hcsb = c(1, 0.95, 0.85, 0.5), ns = c(200, 400, 600, 800, 1000), print = FALSE){
   # df is a dataframe with treatment allocations labeled 'tx"
   # periods is a vector of historic periods
   # lambdas is a vector of intervention effects
@@ -31,7 +31,7 @@ sample_size_function <- function(df, periods, lambdas = c(1,0.6,0.5, 0.4,0.3), n
       
       df_gen <- rbind(df_gen, 
                       cbind(iter, PERIOD, 
-                            generate_function(cluster = df_temp_2$clust, lambda = lambdas, n = ns, 
+                            generate_function(cluster = df_temp_2$clust, lambda = lambdas, hcsb = hcsb, n = ns, 
                                               tx = unlist(df_temp_2[,5]), case_proportions = unlist(df_temp_2$propCases), 
                                               control_proportions = unlist(df_temp_2$propOFI), print = print)))
       iter <- iter + 1
