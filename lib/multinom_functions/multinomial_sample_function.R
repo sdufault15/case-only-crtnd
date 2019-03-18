@@ -1,5 +1,5 @@
 multinom_sample_function <- function(lambda, vecP.observed, tx.status, n, print = FALSE){
-  # lambda is a numeric
+  # lambda is a numeric for the intervention effect size
   # vecP.observed is a vector of observed proportions
   # tx.status is a vector of 1s and 0s denoting intervention status
   # n is the size of the sample
