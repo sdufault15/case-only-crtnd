@@ -106,7 +106,7 @@ power <- power %>% ungroup %>% mutate(method = ifelse(method == "power.lambda.es
                                                   ifelse(method == "power.or.est", "Odds Ratio",
                                                          ifelse(method == "power.tpf.est", "Test-Positive Fraction", "Random Effects"))))
 
-power %>% filter(method != "Test-Positive Fraction") %>%
+power %>% #filter(method != "Test-Positive Fraction") %>%
   ggplot(aes(x = as.factor(RR), y = value, group = method, col = hcsb)) + #, shape = hcsb)) + #, shape = method)) + 
   facet_wrap(~method) +
   ylab("Power") + 
@@ -125,4 +125,4 @@ power %>% filter(method != "Test-Positive Fraction") %>%
         axis.title.y = element_text(size = 22, margin = margin(0,15,0,0))) + 
   scale_color_manual("Health-Care-\nSeeking Behavior", values = c("None" = myCol[4], "Low" = myCol[3], "Medium" = myCol[2], "High" = myCol[1]), 
                      limits = c("High", "Medium", "Low", "None"))
-ggsave(here("graphs", "power-full-range.png"), device = "png", width = 20, height = 6.5, units = "in")
+ggsave(here("graphs", "power-full-range-tpf.png"), device = "png", width = 10, height = 8, units = "in")
