@@ -1,6 +1,6 @@
 performance_function <- function(df, m, zstar, estimator = c("AggOR", "ME.GEE", "TP")){
   
-  df_temp <- as_tibble(df) %>% nest(-PERIOD, -iter, -lambda, -size)
+  df_temp <- as_tibble(df) %>% nest(-PERIOD, -iter, -lambda, -hcsb, -size)
   
   if("AggOR" %in% estimator){
     df_temp <- df_temp %>% mutate(AggOR = map(data, ~aggregate_or_function(., m, zstar))) %>% 
