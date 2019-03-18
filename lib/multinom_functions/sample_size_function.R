@@ -32,8 +32,8 @@ sample_size_function <- function(df, periods, lambdas = c(1,0.6,0.5, 0.4,0.3), n
       df_gen <- rbind(df_gen, 
                       cbind(iter, PERIOD, 
                             generate_function(cluster = df_temp_2$clust, lambda = lambdas, n = ns, 
-                                              tx = unlist(df_temp_2[,5]), vecP.observed = unlist(df_temp_2$propCases), 
-                                              vecP2.observed = unlist(df_temp_2$propOFI), print = print)))
+                                              tx = unlist(df_temp_2[,5]), case_proportions = unlist(df_temp_2$propCases), 
+                                              control_proportions = unlist(df_temp_2$propOFI), print = print)))
       iter <- iter + 1
       
     }
