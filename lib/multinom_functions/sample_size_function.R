@@ -12,12 +12,17 @@ sample_size_function <- function(df, periods, lambdas = c(1,0.6,0.5, 0.4,0.3), h
   df_temp <- NULL
   df_temp_2 <- NULL
   
+  #stepi <- 1
+  #pb <- txtProgressBar(min = 0, max = length(periods), initial = 0, style = 3)
   for (PERIOD in periods){
+    #print(c("Period: ", PERIOD))
+    #setTxtProgressBar(pb, stepi)
     df_temp <- df %>% filter(Period == PERIOD)
     #print(df_temp)
     
     for (TX in treatment.status){
-      print(c("Iteration: ", iter, "Period: ", PERIOD, "Tx: ", TX))
+      #print(c("Iteration: ", iter, "Period: ", PERIOD, "Tx: ", TX, "lambda: ", lambdas))
+
       
       df_temp_2 <- df_temp %>% select(clust:Cases, TX) %>%
         mutate(propCases = Cases/sum(Cases),
@@ -37,6 +42,7 @@ sample_size_function <- function(df, periods, lambdas = c(1,0.6,0.5, 0.4,0.3), h
       iter <- iter + 1
       
     }
+    #stepi <- stepi + 1
   }
   return(df_gen)
 }

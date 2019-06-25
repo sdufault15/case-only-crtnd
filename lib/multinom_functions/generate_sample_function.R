@@ -10,13 +10,13 @@ generate_function <- function(cluster, lambda, hcsb, n, tx, case_proportions, co
   out <- NULL
   
   for (size in n){
-    for (lamb in lambda){
+    #for (lamb in lambda){
       for (hc in hcsb){
-      out <- rbind(out, cbind(cluster, tx, lamb, size, hc,
-                              cases = multinom_sample_function_hcsb(lambda = lamb, hcsb = hc, vecP.observed = case_proportions, tx.status = tx, n = size), 
+      out <- rbind(out, cbind(cluster, tx, lambda, size, hc,
+                              cases = multinom_sample_function_hcsb(lambda = lambda, hcsb = hc, vecP.observed = case_proportions, tx.status = tx, n = size), 
                               OFIs = multinom_sample_function_hcsb(lambda = 1, hcsb = hc, vecP.observed = control_proportions, tx.status = tx, n = 4*size)))
       }
-    }
+  #  }
   }
   out <- data.frame(out, row.names = NULL)
   names(out) <- c("Cluster", "Treatment", "lambda", "size", "hcsb", "cases", "OFIs")
