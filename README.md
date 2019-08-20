@@ -1,4 +1,4 @@
-# Analysis of  Cluster Randomized Test-Negative Designs: A Case-Only Approach
+# Analysis of  Cluster Randomized Test-Negative Designs: A Test-Positive Only Approach
 
 ## Objective of this Repository
 This repository holds all of the code necessary to recreate the analysis performed in the paper by the same name. The code has not been optimized, but should accurately return the results described in the paper. 
