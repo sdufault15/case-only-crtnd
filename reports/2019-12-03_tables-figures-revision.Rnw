@@ -1,0 +1,582 @@
+\documentclass{article}
+\usepackage[margin = 1in]{geometry}
+\usepackage{placeins}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+%\usepackage{xcolor}
+
+\title{Tables and Figures}
+\author{Suzanne Dufault}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+<<r global_options, include=FALSE>>=
+knitr::opts_chunk$set(fig.width=8, fig.height=6, fig.path='../graphs/',
+                       warning=FALSE, echo = FALSE, message=FALSE, fig.align = 'center')
+@
+
+<<>>=
+library(here)
+library(tidyverse)
+library(xtable)
+library(latex2exp)
+library(ggpubr)
+library(knitr)
+library(kableExtra)
+
+my_theme <- theme_classic() + 
+  theme(axis.title.y = element_blank(),
+        strip.background = element_rect(
+          color="lightblue",
+          fill=alpha("lightblue", 0.2),
+          size=1,
+          linetype="solid"),
+        axis.line.y = element_blank(),
+        text = element_text(family = "serif",
+                            size = 12,
+                            color = "black"),
+        axis.text = element_text(color = "black"),
+        legend.position = "right",
+        panel.border = element_rect(fill = NA, 
+                                    colour = "lightgray", 
+                                    linetype = "solid" ))
+
+@
+
+<<data, echo = FALSE>>=
+# Don't waste time reloading data
+ifelse(!exists("multinom_hcsb_1000_count"), 
+       load(here("data", "2019-06-25_multinom_hcsb_1000_count.RData")),
+       "Data already loaded in environment.")
+
+# Don't waste time reloading data
+# RR = 1, 0.6, 0.5, 0.4, 0.3
+ifelse(!exists("multinom_hcsb_1000_orig"), 
+       load(here("data","2019-06-25_multinom_hcsb_1000.RData")),
+       "Data already loaded in environment.")
+multinom_hcsb_1000_orig <- multinom_hcsb_1000 
+
+# Don't waste time reloading data
+# RR = 0.8, 0.2
+ifelse(!exists("multinom_hcsb_1000_new"), 
+       load(here("data","2019-06-25_multinom_hcsb_1000_rr-08-02.RData")),
+       "Data already loaded in environment.")
+multinom_hcsb_1000_new <- multinom_hcsb_1000 
+
+multinom_hcsb_1000_count <- bind_rows(
+  multinom_hcsb_1000_count, 
+  dplyr::select(multinom_hcsb_1000_new, c(iter:IRR.pval.me)))
+
+multinom_hcsb_1000 <- bind_rows(
+  multinom_hcsb_1000_orig,
+  dplyr::select(multinom_hcsb_1000_new, c(iter:data, TP:pval.me))
+)
+
+rm(multinom_hcsb_1000_new, multinom_hcsb_1000_orig)
+#beepr::beep()
+@
+
+\section{Power}
+
+\FloatBarrier
+
+<<power_tables, echo = FALSE, results = "asis">>=
+power <- multinom_hcsb_1000_count %>%
+  select(PERIOD, lambda, size, hcsb, IRR.pval.gee, IRR.pval.me) %>%
+  group_by(PERIOD, lambda, size, hcsb) %>%
+  # First estimate for each period
+  summarize(pval.gee = mean(IRR.pval.gee <= 0.05),
+            pval.me = mean(IRR.pval.me <= 0.05)) %>%
+  # Then average over the periods
+  group_by(lambda, size, hcsb) %>%
+  summarize(power.gee = mean(pval.gee),
+            power.me = mean(pval.me))
+
+power2 <- multinom_hcsb_1000 %>%
+  select(PERIOD, lambda, size, hcsb, pval.tp) %>%
+  group_by(PERIOD, lambda, size, hcsb) %>%
+  # First estimate for each period
+  summarize(pval.tp = mean(pval.tp <= 0.05)) %>%
+  # Then average over the periods
+  group_by(lambda, size, hcsb) %>%
+  summarize(power.tp = mean(pval.tp))
+
+pow1 <- full_join(power, power2, by = c("lambda", "hcsb", "size")) %>%
+  ungroup() %>%
+  select(-size) %>%
+  group_by(lambda, hcsb) %>%
+  arrange(-lambda, -hcsb) %>%
+  ungroup() %>%
+  mutate(lambda = ifelse(lambda == 1, "Type 1 Error: 1.0", lambda)) %>%
+  mutate(`$\\lambda$` = lambda,
+         `$\\alpha_{RA}$` = hcsb,
+         GEE = power.gee,
+         `Mixed Effects` = power.me,
+         `Count Ratio` = power.tp) %>%
+  dplyr::select(`$\\lambda$`:`Count Ratio`) 
+
+pow2 <- power3 <- multinom_hcsb_1000 %>%
+  select(PERIOD, lambda, size, hcsb, pval.gee, pval.me, sig.agg) %>%
+  group_by(PERIOD, lambda, size, hcsb) %>%
+  # First estimate for each period
+  summarize(pval.gee = mean(pval.gee <= 0.05),
+            pval.me = mean(pval.me <= 0.05),
+            pval.agg = mean(sig.agg, na.rm = TRUE)) %>%
+  # Then average over the periods
+  group_by(lambda, size, hcsb) %>%
+  summarize(power.gee = mean(pval.gee),
+            power.me = mean(pval.me),
+            power.agg = mean(pval.agg)) %>%
+  ungroup() %>%
+  select(-size) %>%
+  group_by(lambda, hcsb) %>%
+  arrange(-lambda, -hcsb) %>%
+  ungroup() %>%
+  mutate(lambda = ifelse(lambda == 1, "Type 1 Error: 1.0", lambda)) %>%
+  mutate(`$\\lambda$` = lambda,
+         `$\\alpha_{RA}$` = hcsb,
+         GEE = power.gee,
+         `Mixed Effects` = power.me,
+         `Simple TND` = power.agg) %>%
+  dplyr::select(`$\\lambda$`:`Simple TND`) 
+
+power <- left_join(pow1, pow2, by = c("$\\lambda$", "$\\alpha_{RA}$"))
+
+names(power) <- c(names(power)[1:2], "GEE", "Mixed Effects", "Count Ratio", "GEE", "Mixed Effects", "Simple TND") 
+power %>%
+  kable(booktabs = T, digits = c(1,2,rep(3,6)), 
+        linesep = "", escape = F, format = "latex",
+        align = "cccccccc",
+        caption = "The power, and Type I error rates, in testing departure from the null of no intervention effect based on estimation methods with and without debiasing by negative control counts for a range of Relative Risks ($\\lambda$), over 10,000 intervention allocations applied to each of 9 historical time periods with 1,000 cases and 4,000 negative controls (when applicable). Differential ascertainment ($\\alpha_{RA}$) is allowed to increase in severity. ",
+        label = "power") %>%
+  kable_styling(latex_options = "scale_down") %>%
+  add_header_above(c(" ", " ", "Count Only Methods[note]" = 3, "Negative Control Debiased Methods[note]" = 3)) %>%
+  add_footnote(c("GEE and mixed effects count only models assume Poisson distributed counts and use the canonical log link.",
+                 "GEE and mixed effects negative control de-biased models assume binomially distributed counts and use the canonical logit link."),
+               notation = "symbol") %>%
+  collapse_rows(columns = 1, latex_hline = "major", valign = "middle")
+@
+
+<<power1_plot, echo = FALSE>>=
+# Vertical Plot
+power_dta <- pow1 %>%
+  pivot_longer(cols = c(GEE, `Mixed Effects`, `Count Ratio`), names_to = "type", values_to = "power") %>%
+  filter(`$\\lambda$` %in% c("Type 1 Error: 1.0", 0.8, 0.6, 0.4, 0.2)) 
+
+power_colors_1 <- ifelse(power_dta$power > 0.8, "black", "gray")
+power_p1 <- power_dta %>%
+  mutate(lambda2 = case_when(`$\\lambda$` == "Type 1 Error: 1.0" ~ "Type 1 Error",
+                             `$\\lambda$` == 0.8 ~ "RR = 0.8",
+                             `$\\lambda$` == 0.6 ~ "RR = 0.6",
+                             #`$\\lambda$` == 0.5 ~ "RR = 0.5",
+                             `$\\lambda$` == 0.4 ~ "RR = 0.4",
+                             #`$\\lambda$` == 0.3 ~ "RR = 0.3"),
+                             `$\\lambda$` == 0.2 ~ "RR = 0.2"),
+         # type = case_when(type == "power.tp" ~ "Test-Positive Only",
+         #                  type == "power.me" ~ "Mixed Effects",
+         #                  type == "power.gee" ~ "GEE"),
+         #`Health-Care--Seeking Behavior`
+         `$\\alpha_{RA}$`= as.factor(`$\\alpha_{RA}$`)) %>%
+  ggplot(aes(x = power*100, y = type, shape = `$\\alpha_{RA}$`)) + 
+  #ggtitle("Case-Count Only Methods") +
+  geom_point(col = power_colors_1,
+             size = 2) + 
+  facet_wrap(~lambda2, ncol = 1) + 
+  geom_vline(xintercept = 80, lty = 2, col = 'lightblue') + 
+  theme_classic() +
+  scale_y_discrete(limits = c("GEE", "Mixed Effects", "Count Ratio")) + 
+  my_theme + 
+  scale_shape_discrete(TeX("$\\alpha_{RA}")) + 
+  scale_x_continuous("Power (%)", 
+                     breaks = seq(0,100,by = 20), 
+                     labels = seq(0,100,by = 20),
+                     limits = c(0,100))
+
+@
+
+<<power2_plot>>=
+power_dta_2 <- power3 %>%
+  pivot_longer(cols = c(GEE, `Mixed Effects`, `Simple TND`), names_to = "type", values_to = "power") %>%
+  filter(`$\\lambda$` %in% c("Type 1 Error: 1.0", 0.8, 0.6, 0.4, 0.2)) 
+
+power_colors_2 <- ifelse(power_dta_2$power > 0.8, "black", "gray")
+power_p2 <- power_dta_2 %>%
+  mutate(lambda2 = case_when(`$\\lambda$` == "Type 1 Error: 1.0" ~ "Type 1 Error",
+                             `$\\lambda$` == 0.8 ~ "RR = 0.8",
+                             `$\\lambda$` == 0.6 ~ "RR = 0.6",
+                             #`$\\lambda$` == 0.5 ~ "RR = 0.5",
+                             `$\\lambda$` == 0.4 ~ "RR = 0.4",
+                             #`$\\lambda$` == 0.3 ~ "RR = 0.3"),
+                             `$\\lambda$` == 0.2 ~ "RR = 0.2"),
+         # type = case_when(type == "power.tp" ~ "Test-Positive Only",
+         #                  type == "power.me" ~ "Mixed Effects",
+         #                  type == "power.gee" ~ "GEE"),
+         #`Health-Care--Seeking Behavior`
+         `$\\alpha_{RA}$`= as.factor(`$\\alpha_{RA}$`)) %>%
+  ggplot(aes(x = power*100, y = type, shape = `$\\alpha_{RA}$`)) + 
+  # ggtitle("Case and Negative Control Methods") +
+  geom_point(col = power_colors_2,
+             size = 2) + 
+  scale_y_discrete(limits = c("GEE", "Mixed Effects", "Simple TND")) + 
+  facet_wrap(~lambda2, ncol = 1) + 
+  geom_vline(xintercept = 80, lty = 2, col = 'lightblue') + 
+  my_theme + 
+  scale_shape_discrete(guide= guide_legend(title = TeX("$\\alpha_A"),
+                                           title.position = "top")) + 
+  scale_x_continuous("Power (%)", 
+                     breaks = seq(0,100,by = 20), 
+                     labels = seq(0,100,by = 20),
+                     limits = c(0,100))
+@
+
+<<power_comp>>=
+#gridExtra::grid.arrange(power_p1, power_p2, ncol = 2)
+
+ggarrange(power_p1, power_p2, 
+          labels = c("A", "B"),
+          legend = "right",
+          common.legend = TRUE) 
+# ggsave(filename = here("graphs", "2019-12-12_vertical-power-comparison-plot.pdf"),
+#        width = 9,
+#        height = 5,
+#        units = "in",
+#        device = "pdf")
+@
+
+
+\FloatBarrier
+
+\section{Bias}
+
+\FloatBarrier
+
+<<bias_tables, results = "asis">>=
+bias <- multinom_hcsb_1000_count %>%
+  select(PERIOD, lambda, size, hcsb, IRR.gee, IRR.me) %>%
+  rowwise() %>%
+  mutate(bias.gee = IRR.gee - lambda,
+         bias.me = IRR.me - lambda) %>%
+  # First estimate by period
+  group_by(PERIOD, lambda, size, hcsb) %>%
+  summarize(bias.gee = mean(bias.gee),
+            bias.me =  mean(bias.me))  %>%
+  # Then average over the periods
+  group_by(lambda, size, hcsb) %>%
+  summarize(bias.gee = mean(bias.gee),
+            bias.me =  mean(bias.me))
+
+bias2 <- multinom_hcsb_1000 %>%
+  select(PERIOD, lambda, size, hcsb, OR.tp) %>%
+  rowwise() %>%
+  mutate(bias.tp = OR.tp - lambda) %>%
+  # First estimate by period
+  group_by(PERIOD, lambda, size, hcsb) %>%
+  summarize(bias.tp = mean(bias.tp))  %>%
+  # Then average over the periods
+  group_by(lambda, size, hcsb) %>%
+  summarize(bias.tp = mean(bias.tp))
+
+bias3 <- multinom_hcsb_1000 %>%
+  select(PERIOD, lambda, size, hcsb, OR.gee, OR.me, OR.agg) %>%
+  rowwise() %>%
+  mutate(bias.gee = OR.gee - lambda,
+         bias.me = OR.me - lambda,
+         bias.agg = OR.agg - lambda) %>%
+  # First estimate by period
+  group_by(PERIOD, lambda, size, hcsb) %>%
+  summarize(bias.gee = mean(bias.gee),
+            bias.me =  mean(bias.me),
+            bias.agg =  mean(bias.agg))  %>%
+  # Then average over the periods
+  group_by(lambda, size, hcsb) %>%
+  summarize(bias.gee = mean(bias.gee),
+            bias.me =  mean(bias.me),
+            bias.agg =  mean(bias.agg)) %>%
+  ungroup() %>%
+  mutate(`$\\lambda$` = lambda,
+         `$\\alpha_{RA}$` = hcsb,
+         GEE = bias.gee,
+         `Mixed Effects` = bias.me,
+         `Simple TND` = bias.agg) %>%
+  dplyr::select(`$\\lambda$`:`Simple TND`)
+
+
+bias1 <- full_join(bias, bias2, by = c("lambda", "hcsb", "size")) %>%
+  ungroup() %>%
+  select(-size) %>%
+  group_by(lambda, hcsb) %>%
+  arrange(-lambda, -hcsb) %>%
+  ungroup() %>%
+  mutate(`$\\lambda$` = lambda,
+         `$\\alpha_{RA}$` = hcsb,
+         GEE = bias.gee,
+         `Mixed Effects` = bias.me,
+         `Count Ratio` = bias.tp) %>%
+  dplyr::select(`$\\lambda$`:`Count Ratio`) 
+
+bias <- left_join(bias1, bias3, by = c("$\\lambda$", "$\\alpha_{RA}$"))
+
+names(bias) <- c(names(bias)[1:2], "GEE", "Mixed Effects", "Count Ratio", "GEE", "Mixed Effects", "Simple TND") 
+bias %>%
+  kable(booktabs = T, digits = c(1,2,rep(3,6)), 
+        linesep = "", escape = F, format = "latex",
+        align = "cccccccc",
+        caption = "Bias in estimation of the intervention Relative Risk for estimation methods with and wihtout debiasing by negative control counts for a range of Relative Risks ($\\lambda$), over 10,000 intervention allocations applied to each of 9 historical time periods with 1,000 cases and 4,000 controls (when applicable). Differential ascertainment($\\alpha_{RA}$) is allowed to increase in severity.",
+        label = "bias") %>%
+  kable_styling(latex_options = "scale_down") %>%
+  add_header_above(c(" ", " ", "Count Only Methods[note]" = 3, "Negative Control De-Biased Methods[note]" = 3)) %>%
+  add_footnote(c("GEE and mixed effects count only models assume Poisson distributed counts and use the canonical log link.",
+                 "GEE and mixed effects negative control de-biased models assume binomially distributed counts and use the canonical logit link."),
+               notation = "symbol") %>%
+  collapse_rows(columns = 1, latex_hline = "major", valign = "middle")
+@
+
+<<bias_plots>>=
+# Vertical Plot
+bias_dta <- bias1 %>%
+  pivot_longer(cols = c("GEE", `Mixed Effects`, `Count Ratio`), names_to = "type", values_to = "bias") %>%
+  filter(`$\\lambda$` %in% c(1.0, 0.8, 0.6, 0.4, 0.2))
+bias_colors_1 <- ifelse(bias_dta$bias > 0, "black", "gray")
+
+bias_1 <- bias_dta %>%
+  mutate(lambda2 = case_when(`$\\lambda$` == 1.0 ~ "RR = 1.0",
+                             `$\\lambda$` == 0.8 ~ "RR = 0.8",
+                             `$\\lambda$` == 0.6 ~ "RR = 0.6",
+                             `$\\lambda$` == 0.4 ~ "RR = 0.4",
+                             `$\\lambda$` == 0.2 ~ "RR = 0.2"),
+         #`Health-Care--Seeking Behavior`
+         `$\\alpha_{RA}$`= as.factor(`$\\alpha_{RA}$`)) %>%
+  ggplot(aes(x = bias, y = type, shape = `$\\alpha_{RA}$`)) + 
+  geom_vline(xintercept = 0, lty = 2, col = 'lightblue') + 
+  geom_point(col = bias_colors_1,
+             size = 2) + 
+  facet_wrap(~lambda2, ncol = 1) + 
+  scale_shape_discrete(TeX("$\\alpha_{RA}")) + 
+  scale_y_discrete(limits = c("GEE", "Mixed Effects", "Count Ratio")) + 
+  my_theme +
+  scale_x_continuous(TeX("$E\\[\\widehat{RR}\\] - RR"),
+                    breaks = seq(-0.5,0.5,by = .25),
+                    labels = seq(-0.5,0.5,by = .25),
+                    limits = c(-0.5,0.5))
+
+# Vertical Plot
+bias2_dta <- bias3 %>%
+  pivot_longer(cols = c("GEE", `Mixed Effects`, `Simple TND`), names_to = "type", values_to = "bias") %>%
+  filter(`$\\lambda$` %in% c(1.0, 0.8, 0.6, 0.4, 0.2))
+
+bias_colors_2 <- ifelse(bias2_dta$bias > 0, "black", "gray")
+
+bias_2 <- bias2_dta %>%
+  mutate(lambda2 = case_when(`$\\lambda$` == 1.0 ~ "RR = 1.0",
+                             `$\\lambda$` == 0.8 ~ "RR = 0.8",
+                             `$\\lambda$` == 0.6 ~ "RR = 0.6",
+                             `$\\lambda$` == 0.4 ~ "RR = 0.4",
+                             `$\\lambda$` == 0.2 ~ "RR = 0.2"),
+         #`Health-Care--Seeking Behavior`
+         `$\\alpha_{RA}$`= as.factor(`$\\alpha_{RA}$`)) %>%
+  ggplot(aes(x = bias, y = type, shape = `$\\alpha_{RA}$`)) + 
+  geom_vline(xintercept = 0, lty = 2, col = 'lightblue') + 
+  geom_point(col = bias_colors_2,
+             size = 2) + 
+  facet_wrap(~lambda2, ncol = 1) + 
+  my_theme +
+  scale_y_discrete(limits = c("GEE", "Mixed Effects", "Simple TND")) + 
+  scale_shape_discrete(TeX("$\\alpha_{RA}")) + 
+  scale_x_continuous(TeX("$E\\[\\widehat{RR}\\] - RR"),
+                    breaks = seq(-0.5,0.5,by = .25),
+                    labels = seq(-0.5,0.5,by = .25),
+                    limits = c(-0.5,0.5))
+@
+
+<<bias_comp>>=
+ggarrange(bias_1, bias_2, 
+          labels = c("A", "B"),
+          legend = "right",
+          common.legend = TRUE) 
+# ggsave(filename = here("graphs", "2019-12-12_vertical-bias-comparison-plot.pdf"),
+#        width = 9*(1.15),
+#        height = 5*(1.15),
+#        units = "in",
+#        device = "pdf")
+@
+\FloatBarrier
+
+\section{Coverage}
+
+\FloatBarrier
+
+<<coverage_tables, results = "asis">>=
+coverage <- multinom_hcsb_1000_count %>%
+  select(PERIOD, lambda, size, hcsb, IRR.gee, IRR.sd.gee, IRR.me, IRR.sd.me) %>%
+  rowwise() %>%
+  mutate(coverage.gee = between(log(lambda), 
+                                log(IRR.gee) - 1.96*IRR.sd.gee, # sd is already on the log scale
+                                log(IRR.gee) + 1.96*IRR.sd.gee),
+         coverage.me = between(log(lambda), 
+                               log(IRR.me) - 1.96*IRR.sd.me, # sd is already on the log scale
+                               log(IRR.me) + 1.96*IRR.sd.me)) %>%
+  # First, estimate by period
+  group_by(PERIOD, lambda, size, hcsb) %>%
+  summarize(cov.gee = mean(coverage.gee),
+            cov.me =  mean(coverage.me))  %>%
+  # Then average over the periods
+  group_by(lambda, size, hcsb) %>%
+  summarize(cov.gee = mean(cov.gee),
+            cov.me =  mean(cov.me))
+
+coverage2 <- multinom_hcsb_1000 %>%
+  select(PERIOD, lambda, size, hcsb, OR.tp, sd.tp) %>%
+  rowwise() %>%
+  mutate(coverage.tp = between(log(lambda), 
+                                log(OR.tp) - 1.96*sd.tp, # sd is already on the log scale
+                                log(OR.tp) + 1.96*sd.tp)) %>%
+  # First, estimate by period
+  group_by(PERIOD, lambda, size, hcsb) %>%
+  summarize(cov.tp = mean(coverage.tp))  %>%
+  # Then average over the periods
+  group_by(lambda, size, hcsb) %>%
+  summarize(cov.tp = mean(cov.tp))
+
+coverage3 <- multinom_hcsb_1000 %>%
+  select(PERIOD, lambda, size, hcsb, OR.gee, sd.gee, OR.me, sd.me, OR.agg, sd.agg) %>%
+  rowwise() %>%
+  mutate(coverage.gee = between(log(lambda), 
+                                log(OR.gee) - 1.96*sd.gee, # sd is already on the log scale
+                                log(OR.gee) + 1.96*sd.gee),
+         coverage.me = between(log(lambda), 
+                                log(OR.me) - 1.96*sd.me, # sd is already on the log scale
+                                log(OR.me) + 1.96*sd.me),
+         coverage.agg = between(log(lambda), 
+                                log(OR.agg) - 1.96*sd.agg, # sd is already on the log scale
+                                log(OR.agg) + 1.96*sd.agg)) %>%
+  # First, estimate by period
+  group_by(PERIOD, lambda, size, hcsb) %>%
+  summarize(cov.gee = mean(coverage.gee, na.rm = TRUE),
+            cov.me = mean(coverage.me, na.rm = TRUE),
+            cov.agg = mean(coverage.agg, na.rm = TRUE))  %>%
+  # Then average over the periods
+  group_by(lambda, size, hcsb) %>%
+  summarize(cov.gee = mean(cov.gee),
+            cov.me = mean(cov.me),
+            cov.agg = mean(cov.agg)) %>%
+  ungroup() %>%
+  mutate(`$\\lambda$` = lambda,
+         `$\\alpha_{RA}$` = hcsb,
+         GEE = cov.gee,
+         `Mixed Effects` = cov.me,
+         `Simple TND` = cov.agg) %>%
+  dplyr::select(`$\\lambda$`:`Simple TND`)
+
+cov1 <- full_join(coverage, coverage2, by = c("lambda", "hcsb", "size")) %>%
+  ungroup() %>%
+  select(-size) %>%
+  group_by(lambda, hcsb) %>%
+  arrange(-lambda, -hcsb) %>%
+  ungroup() %>%
+  mutate(`$\\lambda$` = lambda,
+         `$\\alpha_{RA}$` = hcsb,
+         GEE = cov.gee,
+         `Mixed Effects` = cov.me,
+         `Count Ratio` = cov.tp) %>%
+  dplyr::select(`$\\lambda$`:`Count Ratio`) 
+
+coverage <- left_join(cov1, coverage3, by = c("$\\lambda$", "$\\alpha_{RA}$"))
+
+names(coverage) <- c(names(coverage)[1:2], "GEE", "Mixed Effects", "Count Ratio", "GEE", "Mixed Effects", "Simple TND") 
+coverage %>%
+  kable(booktabs = T, digits = c(1,2,rep(3,6)), 
+        linesep = "", escape = F, format = "latex",
+        align = "cccccccc",
+        caption = "95\\% confidence interval coverage based on estimation of the intervention Relative Risk for estimation methods with and without debiasing by negative control counts for a range of Relative Risks ($\\lambda$), over 10,000 intervention allocations applied to each of 9 historical time periods with 1,000 cases and 4,000 negative controls (when applicable). Differential ascertainment ($\\alpha_{RA}$) is allowed to increase in severity.",
+        label = "bias") %>%
+  kable_styling(latex_options = "scale_down") %>%
+  add_header_above(c(" ", " ", "Count Only Methods[note]" = 3, "Negative Control De-Biased Methods[note]" = 3)) %>%
+  add_footnote(c("GEE and mixed effects count only models assume Poisson distributed counts and use the canonical log link.",
+                 "GEE and mixed effects negative control de-biased models assume binomially distributed counts and use the canonical logit link."),
+               notation = "symbol") %>%
+  collapse_rows(columns = 1, latex_hline = "major", valign = "middle")
+@
+
+<<coverage_plots>>=
+# Vertical Plot
+cov_dta <- cov1 %>%
+  pivot_longer(cols = c("GEE", `Mixed Effects`, `Count Ratio`), names_to = "type", values_to = "coverage") %>%
+  filter(`$\\lambda$` %in% c(1, 0.8, 0.6, 0.4, 0.2))
+
+cov_colors_1 <- ifelse(cov_dta$coverage > 0.95, "black", "gray")
+
+cov_1 <- cov_dta %>%
+  mutate(lambda2 = case_when(`$\\lambda$` == 1.0 ~ "RR = 1.0",
+                             `$\\lambda$` == 0.8 ~ "RR = 0.8",
+                             `$\\lambda$` == 0.6 ~ "RR = 0.6",
+                             `$\\lambda$` == 0.4 ~ "RR = 0.4",
+                             `$\\lambda$` == 0.2 ~ "RR = 0.2"),
+         #`Health-Care--Seeking Behavior`
+         `$\\alpha_{RA}$`= as.factor(`$\\alpha_{RA}$`)) %>%
+  ggplot(aes(x = coverage*100, y = type, shape = `$\\alpha_{RA}$`)) + 
+  geom_point(col = cov_colors_1,
+             size = 2) + 
+  facet_wrap(~lambda2, ncol = 1) + 
+  geom_vline(xintercept = 95, lty = 2, col = 'lightblue') + 
+  my_theme + 
+  scale_y_discrete(limits = c("GEE", "Mixed Effects", "Count Ratio")) + 
+  scale_shape_discrete(TeX("$\\alpha_{RA}")) + 
+  scale_x_continuous("Coverage (%)", 
+                     breaks = seq(0,100,by = 20), 
+                     labels = seq(0,100,by = 20),
+                     limits = c(0,100))
+
+cov2_dta <- coverage3 %>%
+  pivot_longer(cols = c("GEE", `Mixed Effects`, `Simple TND`), names_to = "type", values_to = "coverage") %>%
+  filter(`$\\lambda$` %in% c(1, 0.8, 0.6, 0.4, 0.2))
+
+cov_colors_2 <- ifelse(cov2_dta$coverage > 0.95, "black", "gray")
+
+cov_2 <- cov2_dta %>%
+  mutate(lambda2 = case_when(`$\\lambda$` == 1.0 ~ "RR = 1.0",
+                             `$\\lambda$` == 0.8 ~ "RR = 0.8",
+                             `$\\lambda$` == 0.6 ~ "RR = 0.6",
+                             `$\\lambda$` == 0.4 ~ "RR = 0.4",
+                             `$\\lambda$` == 0.2 ~ "RR = 0.2"),
+         #`Health-Care--Seeking Behavior`
+         `$\\alpha_{RA}$`= as.factor(`$\\alpha_{RA}$`)) %>%
+  ggplot(aes(x = coverage*100, y = type, shape = `$\\alpha_{RA}$`)) + 
+  geom_point(col = cov_colors_2,
+             size = 2) + 
+  facet_wrap(~lambda2, ncol = 1) + 
+  geom_vline(xintercept = 95, lty = 2, col = 'lightblue') + 
+  my_theme + 
+  scale_y_discrete(limits = c("GEE", "Mixed Effects", "Simple TND")) + 
+  scale_shape_discrete(TeX("$\\alpha_{RA}")) + 
+  scale_x_continuous("Coverage (%)", 
+                     breaks = seq(0,100,by = 20), 
+                     labels = seq(0,100,by = 20),
+                     limits = c(0,100))
+@
+
+<<cov_comp>>=
+ggarrange(cov_1, cov_2, 
+          labels = c("A", "B"),
+          legend = "right",
+          common.legend = TRUE) 
+# ggsave(filename = here("graphs", "2019-12-12_vertical-coverage-comparison-plot.pdf"),
+#        width = 9,
+#        height = 5,
+#        units = "in",
+#        device = "pdf")
+@
+
+\end{document}
